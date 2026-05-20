@@ -298,8 +298,7 @@ elif modelo_seleccionado == "2. Dinámica del Ingreso Permanente (Largo Plazo y 
                                         line=dict(color='crimson', width=3)))
         
     # Elementos de anclaje visual (Línea de Estado Estacionario Base)
-    fig_lineas.add_line_preset_treatment = True
-    fig_lineas.add_hline(y=y_estado_estacionario, line_dash="dot", line_color="gray", 
+   fig_lineas.add_hline(y=y_estado_estacionario, line_dash="dot", line_color="gray", 
                          annotation_text="EE Inicial (t=0)", annotation_position="bottom left")
 
     fig_lineas.update_layout(
