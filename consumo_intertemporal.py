@@ -187,7 +187,7 @@ if modelo_seleccionado == "1. Modelo de 2 Períodos (Efectos Hicks y Trayectoria
     metrics = st.columns(4)
     metrics[0].metric(label="Perfil de Familia", value=tipo_hogar)
     metrics[1].metric(label="Efecto Sustitución (ES)", value=f"{efecto_sustitucion:.2f}", delta="C₁ ↓" if efecto_sustitucion < 0 else "C₁ ↑")
-    metrics[2].metric(label="Efecto Ingreso (EI)", value=f"{efecto_income:=efecto_ingreso:.2f}", delta="C₁ ↑" if efecto_ingreso > 0 else "C₁ ↓")
+    metrics[2].metric(label="Efecto Ingreso (EI)", value=f"{efecto_ingreso:.2f}", delta="C₁ ↑" if efecto_ingreso > 0 else "C₁ ↓")
     metrics[3].metric(label="Efecto Total (ET)", value=f"{efecto_total:.2f}")
 
     # Caja pedagógica adaptativa
