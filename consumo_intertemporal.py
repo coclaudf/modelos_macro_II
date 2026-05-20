@@ -125,12 +125,13 @@ if verificar_autenticacion():
             fig_static.add_trace(go.Scatter(x=[c1_final], y=[c2_final], mode='markers+text', text=['B (Final)'], textposition='top right', marker=dict(color='blue', size=10), showlegend=False))
             fig_static.add_trace(go.Scatter(x=[c1_hicks], y=[c2_hicks], mode='markers+text', text=['C (Hicks)'], textposition='bottom left', marker=dict(color='orange', size=8), showlegend=False))
             fig_static.add_trace(go.Scatter(x=[y1], y=[y2], mode='markers+text', text=['Dotación (Y)'], textposition='bottom right', marker=dict(color='black', symbol='x', size=10), name="Dotación"))
-            # Rayo de suavización perfecta (Línea de 45°)
-            fig_static.add_trace(go.Scatter(
-                x=c1_vec, y=c1_vec, 
-                name="Suavización Plena (C₁ = C₂)", 
-                line=dict(color='darkgray', dash='dot', width=1.5)
-            ))
+            
+            # Rayo de suavización perfecta (Línea de 45°) -- se anuló con Hashtags porque no me interesa, pero queda por las dudas
+            #fig_static.add_trace(go.Scatter(
+                #x=c1_vec, y=c1_vec, 
+                #name="Suavización Plena (C₁ = C₂)", 
+                #line=dict(color='darkgray', dash='dot', width=1.5)
+            #))
 
             fig_static.update_layout(
                 xaxis_title="Consumo Presente (C₁)", yaxis_title="Consumo Futuro (C₂)",
