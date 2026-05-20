@@ -60,7 +60,7 @@ st.markdown("""
     .block-container { padding-top: 2rem; }
     .stAlert { margin-top: 1rem; }
     </style>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # TÍTULO PRINCIPAL Y ENCUADRE PEDAGÓGICO
 st.title("👨‍💻 Simulador Macroeconómico: Teoría del Consumo Intertemporal")
