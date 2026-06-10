@@ -18,7 +18,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# SEXTOR DE SEGURIDAD / AUTENTICACIÓN INTEGRADA CON EL AULA VIRTUAL
+# SECTOR DE SEGURIDAD / AUTENTICACIÓN INTEGRADA CON EL AULA VIRTUAL
 # =============================================================================
 def verificar_autenticacion():
     CLAVE_SECRETA = "Macro2026"  # Clave de acceso directo por explorador externo
@@ -80,7 +80,7 @@ if verificar_autenticacion():
         
         st.sidebar.subheader("⚡ Shock de Tasa de Interés")
         i_inicial = st.sidebar.slider("Tasa de Interés Inicial (i₀)", 0.0, 1.0, 0.10, 0.05, format="%.2f")
-        i_final = st.sidebar.slider("Tasa de Interés Post-Shock (i₁)", 0.0, 1.0, 0.40, 0.05, format="%.2f")
+        i_final = st.sidebar.slider("Tasa de Interés Post-Shock (i₁)", 0.0, 1.0, 0.10, 0.05, format="%.2f") # AJUSTE: Arranca sin shock (0.10)
 
         # Cálculos económicos óptimos (U = ln(C1) + beta * ln(C2))
         omega_inicial = y1 + y2 / (1 + i_inicial)
@@ -125,13 +125,6 @@ if verificar_autenticacion():
             fig_static.add_trace(go.Scatter(x=[c1_final], y=[c2_final], mode='markers+text', text=['B (Final)'], textposition='top right', marker=dict(color='blue', size=10), showlegend=False))
             fig_static.add_trace(go.Scatter(x=[c1_hicks], y=[c2_hicks], mode='markers+text', text=['C (Hicks)'], textposition='bottom left', marker=dict(color='orange', size=8), showlegend=False))
             fig_static.add_trace(go.Scatter(x=[y1], y=[y2], mode='markers+text', text=['Dotación (Y)'], textposition='bottom right', marker=dict(color='black', symbol='x', size=10), name="Dotación"))
-            
-            # Rayo de suavización perfecta (Línea de 45°) -- se anuló con Hashtags porque no me interesa, pero queda por las dudas
-            #fig_static.add_trace(go.Scatter(
-                #x=c1_vec, y=c1_vec, 
-                #name="Suavización Plena (C₁ = C₂)", 
-                #line=dict(color='darkgray', dash='dot', width=1.5)
-            #))
 
             fig_static.update_layout(
                 xaxis_title="Consumo Presente (C₁)", yaxis_title="Consumo Futuro (C₂)",
@@ -162,8 +155,7 @@ if verificar_autenticacion():
         metrics[3].metric(label="Efecto Total (ET)", value=f"{efecto_total:.2f}")
 
         st.info(f"""
-        **Intuición Económica para el Alumno:**  
-        Al incrementarse la tasa de interés de **{i_inicial*100:.0f}%** a **{i_final*100:.0f}%**, el consumo futuro se vuelve relativamente más barato, generando un **Efecto Sustitución Inequívocamente Negativo** de **{efecto_sustitucion:.2f}** unidades en el consumo presente ($C_1$).  
+        **Intuición Económica para el Alumno:** Al incrementarse la tasa de interés de **{i_inicial*100:.0f}%** a **{i_final*100:.0f}%**, el consumo futuro se vuelve relatively más barato, generando un **Efecto Sustitución Inequívocamente Negativo** de **{efecto_sustitucion:.2f}** unidades en el consumo presente ($C_1$).  
         Como el agente posee un perfil **{tipo_hogar}**, el **Efecto Ingreso** actúa de la siguiente manera: 
         { "Al ser ahorrante, el alza de tasa expande su riqueza intertemporal (Efecto Ingreso positivo), contrarrestando parcialmente la sustitución." if tipo_hogar == "Ahorrante" else "Al ser deudor, el alza de tasa encarece el servicio de su deuda actual, volviéndolo más pobre intertemporalmente. Ambos efectos se refuerzan hacia la caída del consumo presente." if tipo_hogar == "Deudor" else "Al estar en equilibrio exacto de dotación, el Efecto Ingreso puro de Hicks es nulo; la modificación conductual responde netamente al Efecto Sustitución." }
         """)
@@ -186,7 +178,7 @@ if verificar_autenticacion():
              "Futuro Anticipado Positivo (Anuncio en t=1, ocurre en t=4)",
              "Futuro Anticipado Negativo (Anuncio en t=1, ocurre en t=4)"]
         )
-        magnitud_shock = st.sidebar.slider("Magnitud del Shock (ΔY)", -30.0, 30.0, 15.0, 5.0)
+        magnitud_shock = st.sidebar.slider("Magnitud del Shock (ΔY)", -30.0, 30.0, 0.0, 5.0) # AJUSTE: Arranca en 0.0 para evitar desvíos iniciales
         
         st.sidebar.subheader("🛡️ Imperfecciones de Mercado")
         restriccion_liquidez = st.sidebar.checkbox("Activar Restricción de Liquidez Estricta (No Endeudamiento)")
@@ -237,7 +229,6 @@ if verificar_autenticacion():
                 a_restric[t] = a_restric[t-1] * (1 + r) + y_trayectoria[t] - c_restric[t]
 
         # --- COMPRESIÓN BIDIMENSIONAL PARA EL GRÁFICO ESTÁTICO DE SHOCKS (En t=1) ---
-        # Definición de los ejes de dotación para el gráfico analítico
         y1_inicial, y_fut_inicial = y_ee, y_ee * gamma_futuro
         y1_final = y_trayectoria[1]
         y_fut_final = sum(y_trayectoria[t] / ((1 + r) ** (t - 1)) for t in range(2, horizonte_t + 1))
@@ -245,7 +236,6 @@ if verificar_autenticacion():
         omega_2d_inicial = y1_inicial + y_fut_inicial
         omega_2d_final = y1_final + y_fut_final
         
-        # Consumos efectivos en t=1 (Eje X) y Futuro Colapsado (Eje Y)
         c1_inicial_plot, cfut_inicial_plot = y_ee, y_ee * gamma_futuro
         c1_libre_plot, cfut_libre_plot = c_libre[1], c_libre[1] * gamma_futuro
         c1_restric_plot, cfut_restric_plot = c_restric[1], sum(c_restric[t] / ((1 + r) ** (t - 1)) for t in range(2, horizonte_t + 1))
@@ -256,21 +246,21 @@ if verificar_autenticacion():
         
         with col_g1:
             st.write("**Desplazamiento Analítico de Rectas e Isocuantas (t=1)**")
-            c1_grid = np.linspace(0.1, max(omega_2d_inicial, omega_2d_final) * 1.1, 200)
+            # El dominio del grid se extiende para cubrir los interceptos teóricos de las RP
+            c1_grid = np.linspace(0.1, max(omega_2d_inicial, omega_2d_final) * 1.1, 300)
             fig_macro_static = go.Figure()
             
             # Restricción Presupuestaria Inicial (Gris) y Final (Azul)
             fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_inicial - c1_grid, name="RP Inicial (Estado Est.)", line=dict(color='gray', dash='dash')))
             
-            if restriction_lines := restriccion_liquidez:
-                # Si hay restricción de liquidez, la recta final se quiebra verticalmente en Y1
+            if restriccion_liquidez:
                 grid_restric = np.where(c1_grid <= y1_final, omega_2d_final - c1_grid, np.nan)
                 fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=grid_restric, name="RP Final (Con Restricción)", line=dict(color='crimson', width=3)))
                 fig_macro_static.add_vline(x=y1_final, line_dash="dot", line_color="crimson", annotation_text="Límite Crédito (Y₁)")
             else:
                 fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_final - c1_grid, name="RP Post-Shock (Libre)", line=dict(color='blue', width=2.5)))
 
-            # Modelación de curvas de indiferencia simplificadas U = ln(C1) + gamma * ln(C_fut/gamma)
+            # Isocuantas de utilidad intertemporal
             u_init_2d = np.log(c1_inicial_plot) + gamma_futuro * np.log(cfut_inicial_plot / gamma_futuro)
             indif_init_2d = gamma_futuro * np.exp((u_init_2d - np.log(c1_grid)) / gamma_futuro)
             fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=indif_init_2d, name="U₀ (EE Inicial)", line=dict(color='green', width=1.5)))
@@ -286,15 +276,19 @@ if verificar_autenticacion():
             
             if restriccion_liquidez:
                 fig_macro_static.add_trace(go.Scatter(x=[c1_restric_plot], y=[cfut_restric_plot], mode='markers+text', text=['B óptimo (Restringido)'], textposition='bottom right', marker=dict(color='crimson', size=10), showlegend=False))
-            # --- NUEVA LÍNEA: Rayo de suavización perfecta corregido por el factor temporal ---
+
+            # Rayo de suavización perfecta corregido por el factor temporal
             fig_macro_static.add_trace(go.Scatter(
                 x=c1_grid, y=c1_grid * gamma_futuro, 
                 name="Senda de Suavización Plena", 
                 line=dict(color='darkgray', dash='dot', width=1.5)
             ))
+
+            # AJUSTE DE VISUALIZACIÓN: Escalas asimétricas personalizadas para centrar la acción analítica
             fig_macro_static.update_layout(
                 xaxis_title="Consumo Presente Actual (C₁)", yaxis_title="VP del Consumo Futuro Acumulado (C_Futuro)",
-                xaxis=dict(range=[0, max(omega_2d_inicial, omega_2d_final)*1.1]), yaxis=dict(range=[0, max(omega_2d_inicial, omega_2d_final)*1.1]),
+                xaxis=dict(range=[0, max(y1_inicial, y1_final) * 2.5]), # Centrado horizontal elegante
+                yaxis=dict(range=[0, max(y_fut_inicial, y_fut_final) * 1.3]), # Proporción vertical balanceada
                 legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.7)"), margin=dict(l=20, r=20, t=20, b=20), height=450
             )
             st.plotly_chart(fig_macro_static, use_container_width=True)
@@ -344,7 +338,6 @@ if verificar_autenticacion():
         else:  # Shocks anticipados
             st.write("""
             * **El Rol de las Expectativas Racionales (Previsión Perfecta):** Note que en el período $t=1$, el ingreso físico aún no se ha modificado (el eje X de la dotación no cambia). Sin embargo, como el consumidor anticipa el cambio futuro, la dotación se desplaza verticalmente en el gráfico izquierdo. La restricción presupuestaria se expande por "efecto riqueza" desde hoy. El consumidor libre salta de inmediato a un consumo más alto en el período 1.
-            * **La Dinámica frente a Restricciones de Liquidez:** 
-                * Si el shock futuro es *positivo* y se activa la restricción de liquidez, la recta de balance sufre un quiebre estricto (kink) vertical en el nivel de ingreso corriente actual. El consumidor no puede endeudarse para adelantar consumo. Verás en el gráfico analítico que queda atrapado en una solución de esquina (**Punto B**) y en la trayectoria el consumo no se moverá hasta que físicamente llegue el período $t=4$.
+            * **La Dinámica frente a Restricciones de Liquidez:** * Si el shock futuro es *positivo* y se activa la restricción de liquidez, la recta de balance sufre un quiebre estricto (kink) vertical en el nivel de ingreso corriente actual. El consumidor no puede endeudarse para adelantar consumo. Verás en el gráfico analítico que queda atrapado en una solución de esquina (**Punto B**) y en la trayectoria el consumo no se moverá hasta que físicamente llegue el período $t=4$.
                 * Si el shock futuro es *negativo*, el agente necesita ahorrar de forma preventiva. Dado que el sistema financiero permite resguardar valor sin inconvenientes, el consumidor restringido replica con total exactitud al consumidor libre, contrayendo su nivel de consumo desde el período 1.
             """)
