@@ -4,16 +4,60 @@ import plotly.graph_objects as go
 
 # Configuración de página de alta definición
 st.set_page_config(
-    page_title="Simulador de Modelos de Consumo Intertemporal",
+    page_title="Simulador Consumo Intertemporal - Sachs & Larraín",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Estilos visuales complementarios
+# =============================================================================
+# FORZADO DE ALTO CONTRASTE (BLINDAJE DE TEXTO UNIFORME PARA MOODLE)
+# =============================================================================
 st.markdown("""
     <style>
-    .block-container { padding-top: 2rem; }
-    .stAlert { margin-top: 1rem; }
+    /* 1. Fondo blanco puro universal */
+    .stApp, [data-testid="stAppViewContainer"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+    
+    /* 2. Barra lateral en gris muy suave con bordes oscuros */
+    section[data-testid="stSidebar"] {
+        background-color: #F8FAFC !important;
+        border-right: 2px solid #CBD5E1 !important;
+    }
+    
+    /* 3. Forzado de texto oscuro general */
+    .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+        color: #0F172A !important;
+    }
+
+    /* 4. BLINDAJE UNIFORME DE CAJAS ST.SUCCESS (DIAGNÓSTICO DINÁMICO) */
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) {
+        background-color: #ECFDF5 !important;
+        border: 1.5px solid #059669 !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) * {
+        color: #064E3B !important;
+        font-weight: 500 !important;
+    }
+
+    /* 5. BLINDAJE UNIFORME DE CAJAS ST.INFO (RECUADRO GENERAL DE SÍNTESIS) */
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) {
+        background-color: #EFF6FF !important;
+        border: 1.5px solid #2563EB !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) * {
+        color: #1E3A8A !important;
+        font-weight: 500 !important;
+    }
+
+    /* 6. Optimización de márgenes superiores */
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1rem !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -21,23 +65,25 @@ st.markdown("""
 # SECTOR DE SEGURIDAD / AUTENTICACIÓN INTEGRADA CON EL AULA VIRTUAL
 # =============================================================================
 def verificar_autenticacion():
-    CLAVE_SECRETA = "Macro2026"  # Clave de acceso directo por explorador externo
+    CLAVE_SECRETA = "Macro2026"
     
+    # 1. Pase directo para iFrames en Moodle (Parámetros 'embed', 'uner' o 'aula')
+    qp = st.query_params
+    if "embed" in qp or qp.get("embed") == "true" or "uner" in qp or "aula" in qp:
+        return True
+
+    # 2. Respaldo por encabezado HTTP Referer
     try:
-        headers = st.context.headers
-        referer = headers.get("referer", "").lower()
-        fetch_dest = headers.get("sec-fetch-dest", "").lower()
-        
-        # Acceso libre si se detecta que proviene de un iframe o aula virtual
-        if fetch_dest == "iframe" or "moodle" in referer or "canvas" in referer or "classroom" in referer:
+        referer = st.context.headers.get("referer", "").lower()
+        if any(dominio in referer for dominio in ["uner.edu.ar", "moodle", "canvas"]):
             return True
     except Exception:
         pass
 
-    # Pantalla de bloqueo en la barra lateral si se accede por fuera del aula
+    # 3. Pantalla de bloqueo con contraseña para acceso directo por navegador
     st.sidebar.subheader("🔒 Acceso Restringido")
     password_ingresado = st.sidebar.text_input(
-        "Este simulador está integrado al Aula Virtual. Introduce la clave de la cátedra para acceso directo:", 
+        "Este simulador está integrado al Campus Virtual. Introduce la clave de la cátedra:", 
         type="password"
     )
     
@@ -46,298 +92,225 @@ def verificar_autenticacion():
     elif password_ingresado:
         st.sidebar.error("❌ Clave incorrecta")
         
-    st.warning("⚠️ **Acceso No Autorizado:** Por favor, interactúa con este modelo directamente desde las lecturas de tu Aula Virtual o solicita la clave de desarrollo a la cátedra.")
-    st.info("💡 *Nota pedagógica: Diseñamos estas herramientas para que sigan el hilo de tus apuntes teóricos dentro de la plataforma de estudio.*")
+    st.warning("⚠️ **Acceso No Autorizado:** Por favor, interactúa con este modelo directamente desde las lecturas de tu Aula Virtual.")
     return False
 
-# Ejecutar el validador antes de renderizar la app
+# Ejecución del validador de seguridad
 if verificar_autenticacion():
 
-    # TÍTULO PRINCIPAL Y ENCUADRE PEDAGÓGICO
-    st.title("👨‍💻 Simulador Macroeconómico: Teoría del Consumo Intertemporal")
+    st.title("📈 Optimización del Consumo Intertemporal (Modelo de Fisher)")
     st.markdown("""
-    *Desarrollado para la cátedra de Macroeconomía II. Este entorno interactivo permite analizar la microfundamentación 
-    del consumo, la descomposición de efectos de tasas de interés y la dinámica temporal bajo la Teoría del Ingreso Permanente.*
+    *Desarrollado para la cátedra de Macroeconomía II (Basado en la notación de Sachs & Larraín). 
+    Este modelo evalúa la suavización del consumo, las decisiones de ahorro/endeudamiento y los efectos ingreso y sustitución frente a cambios en la tasa de interés.*
     """)
 
-    # --- BARRA LATERAL: SELECCIÓN DE MODELO ---
-    st.sidebar.header("🛠️ Configuración General")
-    modelo_seleccionado = st.sidebar.radio(
-        "Seleccione el enfoque analítico:",
-        ["1. Modelo de 2 Períodos (Efectos Hicks y Trayectoria)", 
-         "2. Dinámica del Ingreso Permanente (Largo Plazo y Liquidez)"]
+    # --- BARRA LATERAL: PARAMETRIZACIÓN ---
+    st.sidebar.header("🛠️ Configuración de Parámetros")
+
+    # 1. CONTROLES DE SHOCK (ARRIBA)
+    st.sidebar.subheader("⚡ Shocks / Modificaciones")
+    Q1_1 = st.sidebar.slider("Ingreso Período 1 Post-Shock (Q₁‚₁)", 100.0, 5000.0, 1000.0, 100.0)
+    Q2_1 = st.sidebar.slider("Ingreso Período 2 Post-Shock (Q₂‚₁)", 100.0, 5000.0, 1000.0, 100.0)
+    r1 = st.sidebar.slider("Tasa de Interés Post-Shock (r₁)", 0.0, 0.50, 0.10, 0.01, format="%.2f")
+    rho1 = st.sidebar.slider("Tasa Preferencia Temporal Post-Shock (ρ₁)", 0.0, 0.30, 0.05, 0.01, format="%.2f")
+
+    # 2. CONTROLES DE SITUACIÓN INICIAL (ABAJO)
+    st.sidebar.subheader("⚙️ Estado Inicial de la Economía")
+    st.sidebar.caption("(Solo modificar de ser necesario cambiar el estado inicial de la economía)")
+    Q1_0 = st.sidebar.slider("Ingreso Período 1 Inicial (Q₁‚₀)", 100.0, 5000.0, 1000.0, 100.0)
+    Q2_0 = st.sidebar.slider("Ingreso Período 2 Inicial (Q₂‚₀)", 100.0, 5000.0, 1000.0, 100.0)
+    r0 = st.sidebar.slider("Tasa de Interés Inicial (r₀)", 0.0, 0.50, 0.10, 0.01, format="%.2f")
+    rho0 = st.sidebar.slider("Tasa Preferencia Temporal Inicial (ρ₀)", 0.0, 0.30, 0.05, 0.01, format="%.2f")
+
+    # --- CÁLCULOS MATEMÁTICOS DE OPTIMIZACIÓN (Sachs & Larraín) ---
+    # Riqueza Total Presente (Omega)
+    Omega0 = Q1_0 + (Q2_0 / (1 + r0))
+    Omega1 = Q1_1 + (Q2_1 / (1 + r1))
+
+    # Consumo Óptimo Período 1: C1* = ((1 + rho) / (2 + rho)) * Omega
+    C1_0_opt = ((1 + rho0) / (2 + rho0)) * Omega0
+    C1_1_opt = ((1 + rho1) / (2 + rho1)) * Omega1
+
+    # Consumo Óptimo Período 2: C2* = ((1 + r) / (1 + rho)) * C1*
+    C2_0_opt = ((1 + r0) / (1 + rho0)) * C1_0_opt
+    C2_1_opt = ((1 + r1) / (1 + rho1)) * C1_1_opt
+
+    # Ahorro / Endeudamiento Período 1 (S1 = Q1 - C1*)
+    S1_0 = Q1_0 - C1_0_opt
+    S1_1 = Q1_1 - C1_1_opt
+
+    hay_shock = (Q1_0 != Q1_1) or (Q2_0 != Q2_1) or (r0 != r1) or (rho0 != rho1)
+
+    # --- MÉTRICAS PRINCIPALES ---
+    st.subheader("📋 Indicadores de Equilibrio Intertemporal")
+    m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+    
+    m_col1.metric(
+        label="Consumo Presente (C₁*)",
+        value=f"USD {C1_1_opt:.2f}",
+        delta=f"USD {C1_1_opt - C1_0_opt:.2f}" if hay_shock else None
+    )
+    m_col2.metric(
+        label="Consumo Futuro (C₂*)",
+        value=f"USD {C2_1_opt:.2f}",
+        delta=f"USD {C2_1_opt - C2_0_opt:.2f}" if hay_shock else None
+    )
+    m_col3.metric(
+        label="Riqueza Humana (Ω)",
+        value=f"USD {Omega1:.2f}",
+        delta=f"USD {Omega1 - Omega0:.2f}" if hay_shock else None
+    )
+    
+    # Definición de posición financiera
+    posicion_txt = "Ahorrador" if S1_1 > 0.01 else ("Prestatario" if S1_1 < -0.01 else "Autarquía")
+    m_col4.metric(
+        label=f"Ahorro S₁ ({posicion_txt})",
+        value=f"USD {S1_1:.2f}",
+        delta=f"USD {S1_1 - S1_0:.2f}" if hay_shock else None
     )
 
-    # =============================================================================
-    # MÓDULO 1: DOS PERÍODOS CON DESCOMPOSICIÓN DE HICKS Y TRAYECTORIA TEMPORAL
-    # =============================================================================
-    if modelo_seleccionado == "1. Modelo de 2 Períodos (Efectos Hicks y Trayectoria)":
-        
-        st.sidebar.subheader("🎛️ Parámetros del Modelo")
-        y1 = st.sidebar.slider("Ingreso Período 1 (Y₁)", 10.0, 100.0, 50.0, 5.0)
-        y2 = st.sidebar.slider("Ingreso Período 2 (Y₂)", 10.0, 100.0, 55.0, 5.0)
-        beta = st.sidebar.slider("Factor de Descuento (β)", 0.5, 1.5, 1.0, 0.05)
-        
-        st.sidebar.subheader("⚡ Shock de Tasa de Interés")
-        i_inicial = st.sidebar.slider("Tasa de Interés Inicial (i₀)", 0.0, 1.0, 0.10, 0.05, format="%.2f")
-        i_final = st.sidebar.slider("Tasa de Interés Post-Shock (i₁)", 0.0, 1.0, 0.10, 0.05, format="%.2f") # AJUSTE: Arranca sin shock (0.10)
+    # --- CUERPO PRINCIPAL: GRÁFICO INTERTEMPORAL DE ALTO CONTRASTE ---
+    st.write("**Espacio de Consumo Intertemporal ($C_1$ vs $C_2$)**")
+    
+    # Rango para ejes
+    max_c1 = max(Omega0, Omega1) * 1.25
+    c1_grid = np.linspace(1.0, max_c1, 400)
 
-        # Cálculos económicos óptimos (U = ln(C1) + beta * ln(C2))
-        omega_inicial = y1 + y2 / (1 + i_inicial)
-        omega_final = y1 + y2 / (1 + i_final)
-        
-        c1_inicial = omega_inicial / (1 + beta)
-        c2_inicial = (beta * (1 + i_inicial) * omega_inicial) / (1 + beta)
-        u_inicial = np.log(c1_inicial) + beta * np.log(c2_inicial)
-        
-        c1_final = omega_final / (1 + beta)
-        c2_final = (beta * (1 + i_final) * omega_final) / (1 + beta)
-        
-        # Descomposición de Hicks
-        c1_hicks = np.exp((u_inicial - beta * np.log(beta * (1 + i_final))) / (1 + beta))
-        c2_hicks = beta * (1 + i_final) * c1_hicks
-        omega_hicks = c1_hicks + c2_hicks / (1 + i_final)
+    fig_macro = go.Figure()
 
-        efecto_sustitucion = c1_hicks - c1_inicial
-        efecto_ingreso = c1_final - c1_hicks
-        efecto_total = c1_final - c1_inicial
+    # -------------------------------------------------------------------------
+    # 1. SITUACIÓN INICIAL (LÍNEA NEGRA SÓLIDA REFERENCIAL IF HAYS HOCK)
+    # -------------------------------------------------------------------------
+    if hay_shock:
+        # Restricción Presupuestaria Inicial (Negro Sólido)
+        c2_presup_0 = (Omega0 - c1_grid) * (1 + r0)
+        c2_presup_0_clean = np.where(c2_presup_0 >= 0, c2_presup_0, np.nan)
         
-        tipo_hogar = "Equilibrado" if abs(y1 - c1_inicial) < 0.01 else ("Ahorrante" if y1 > c1_inicial else "Deudor")
+        fig_macro.add_trace(go.Scatter(
+            x=c1_grid, y=c2_presup_0_clean, name="RP₀ (Restricción Inicial)",
+            line=dict(color='black', width=3)
+        ))
 
-        st.subheader("📊 Módulo 1: Análisis Geométrico Intertemporal vs Trayectoria Dinámica")
-        col1, col2 = st.columns(2)
+        # Curva de Indiferencia Inicial (Gris Oscuro Sólido)
+        c2_indif_0 = C2_0_opt * ((C1_0_opt / c1_grid) ** (1 + rho0))
+        c2_indif_0_clean = np.where(c2_indif_0 <= max_c1 * 1.5, c2_indif_0, np.nan)
         
-        with col1:
-            st.write("**Espacio de Asignación Intertemporal (Estática)**")
-            c1_vec = np.linspace(0.1, max(omega_inicial, omega_final) * 1.1, 200)
-            fig_static = go.Figure()
-            
-            # Restricciones Presupuestarias
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_inicial - c1_vec) * (1 + i_inicial), name="RPI Inicial (i₀)", line=dict(color='gray', dash='dash')))
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_final - c1_vec) * (1 + i_final), name="RPF Final (i₁)", line=dict(color='blue')))
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_hicks - c1_vec) * (1 + i_final), name="RP Hicks (Teórica)", line=dict(color='orange', width=1, dash='dot')))
-            
-            # Curva de Indiferencia Inicial
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.exp((u_inicial - np.log(c1_vec)) / beta), name="U₀ (Bienestar Inicial)", line=dict(color='green', width=2)))
-            
-            # Marcación de Puntos Macroeconómicos
-            fig_static.add_trace(go.Scatter(x=[c1_inicial], y=[c2_inicial], mode='markers+text', text=['A (Inicial)'], textposition='top right', marker=dict(color='green', size=10), showlegend=False))
-            fig_static.add_trace(go.Scatter(x=[c1_final], y=[c2_final], mode='markers+text', text=['B (Final)'], textposition='top right', marker=dict(color='blue', size=10), showlegend=False))
-            fig_static.add_trace(go.Scatter(x=[c1_hicks], y=[c2_hicks], mode='markers+text', text=['C (Hicks)'], textposition='bottom left', marker=dict(color='orange', size=8), showlegend=False))
-            fig_static.add_trace(go.Scatter(x=[y1], y=[y2], mode='markers+text', text=['Dotación (Y)'], textposition='bottom right', marker=dict(color='black', symbol='x', size=10), name="Dotación"))
+        fig_macro.add_trace(go.Scatter(
+            x=c1_grid, y=c2_indif_0_clean, name="U₀ (Indiferencia Inicial)",
+            line=dict(color='#4B5563', width=2)
+        ))
 
-            fig_static.update_layout(
-                xaxis_title="Consumo Presente (C₁)", yaxis_title="Consumo Futuro (C₂)",
-                xaxis=dict(range=[0, max(omega_inicial, omega_final)*1.05]), yaxis=dict(range=[0, max(omega_inicial, omega_final)*(1+i_final)*0.7]),
-                legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99), margin=dict(l=20, r=20, t=20, b=20), height=450
-            )
-            st.plotly_chart(fig_static, use_container_width=True)
+        # Punto de Dotación Inicial E₀
+        fig_macro.add_trace(go.Scatter(
+            x=[Q1_0], y=[Q2_0], mode='markers+text',
+            text=['E₀ (Dotación)'], textposition='top right',
+            marker=dict(color='black', size=9, symbol='square'), name="Dotación E₀"
+        ))
 
-        with col2:
-            st.write("**Evolución Temporal del Consumo y el Ingreso (Dinámica)**")
-            periodos = ['Período 1 (Hoy)', 'Período 2 (Mañana)']
-            fig_dynamic = go.Figure()
-            fig_dynamic.add_trace(go.Scatter(x=periodos, y=[y1, y2], name="Ingreso Disponible (Y)", line=dict(color='black', width=3), marker=dict(size=8)))
-            fig_dynamic.add_trace(go.Scatter(x=periodos, y=[c1_inicial, c2_inicial], name="Consumo Inicial", line=dict(color='green', width=2, dash='dash'), marker=dict(size=6)))
-            fig_dynamic.add_trace(go.Scatter(x=periodos, y=[c1_final, c2_final], name="Consumo Post-Shock", line=dict(color='blue', width=3), marker=dict(size=8)))
-            
-            fig_dynamic.update_layout(
-                yaxis_title="Unidades de Producción/Consumo", yaxis=dict(range=[0, max(y1, y2, c2_inicial, c2_final)*1.15]),
-                legend=dict(yanchor="bottom", y=0.01, xanchor="left", x=0.01), margin=dict(l=20, r=20, t=20, b=20), height=450
-            )
-            st.plotly_chart(fig_dynamic, use_container_width=True)
+        # Óptimo de Consumo Inicial C₀*
+        fig_macro.add_trace(go.Scatter(
+            x=[C1_0_opt], y=[C2_0_opt], mode='markers+text',
+            text=['C₀*'], textposition='bottom left',
+            marker=dict(color='black', size=10, symbol='circle'), name="Óptimo C₀*"
+        ))
 
-        st.markdown("### 📋 Desglose Cuantitativo de Efectos en el Período 1 ($C_1$)")
-        metrics = st.columns(4)
-        metrics[0].metric(label="Perfil de Familia", value=tipo_hogar)
-        metrics[1].metric(label="Efecto Sustitución (ES)", value=f"{efecto_sustitucion:.2f}", delta="C₁ ↓" if efecto_sustitucion < 0 else "C₁ ↑")
-        metrics[2].metric(label="Efecto Ingreso (EI)", value=f"{efecto_ingreso:.2f}", delta="C₁ ↑" if efecto_ingreso > 0 else "C₁ ↓")
-        metrics[3].metric(label="Efecto Total (ET)", value=f"{efecto_total:.2f}")
+    # -------------------------------------------------------------------------
+    # 2. SITUACIÓN POST-SHOCK (COLOR SÓLIDO DESTACADO)
+    # -------------------------------------------------------------------------
+    # Restricción Presupuestaria Post-Shock (Azul Rey Sólido)
+    c2_presup_1 = (Omega1 - c1_grid) * (1 + r1)
+    c2_presup_1_clean = np.where(c2_presup_1 >= 0, c2_presup_1, np.nan)
 
-        st.info(f"""
-        **Intuición Económica para el Alumno:** Al incrementarse la tasa de interés de **{i_inicial*100:.0f}%** a **{i_final*100:.0f}%**, el consumo futuro se vuelve relatively más barato, generando un **Efecto Sustitución Inequívocamente Negativo** de **{efecto_sustitucion:.2f}** unidades en el consumo presente ($C_1$).  
-        Como el agente posee un perfil **{tipo_hogar}**, el **Efecto Ingreso** actúa de la siguiente manera: 
-        { "Al ser ahorrante, el alza de tasa expande su riqueza intertemporal (Efecto Ingreso positivo), contrarrestando parcialmente la sustitución." if tipo_hogar == "Ahorrante" else "Al ser deudor, el alza de tasa encarece el servicio de su deuda actual, volviéndolo más pobre intertemporalmente. Ambos efectos se refuerzan hacia la caída del consumo presente." if tipo_hogar == "Deudor" else "Al estar en equilibrio exacto de dotación, el Efecto Ingreso puro de Hicks es nulo; la modificación conductual responde netamente al Efecto Sustitución." }
-        """)
+    fig_macro.add_trace(go.Scatter(
+        x=c1_grid, y=c2_presup_1_clean, name="RP₁ (Restricción Post-Shock)" if hay_shock else "RP (Restricción Presupuestaria)",
+        line=dict(color='#1D4ED8', width=3.5)
+    ))
 
-    # =============================================================================
-    # MÓDULO 2: TEORÍA DEL INGRESO PERMANENTE CON COHESIÓN GEOMÉTRICA Y DINÁMICA
-    # =============================================================================
-    elif modelo_seleccionado == "2. Dinámica del Ingreso Permanente (Largo Plazo y Liquidez)":
+    # Curva de Indiferencia Post-Shock (Rojo Carmesí Sólido)
+    c2_indif_1 = C2_1_opt * ((C1_1_opt / c1_grid) ** (1 + rho1))
+    c2_indif_1_clean = np.where(c2_indif_1 <= max_c1 * 1.5, c2_indif_1, np.nan)
+
+    fig_macro.add_trace(go.Scatter(
+        x=c1_grid, y=c2_indif_1_clean, name="U₁ (Indiferencia Post-Shock)" if hay_shock else "U (Curva de Indiferencia)",
+        line=dict(color='#DC2626', width=2.5)
+    ))
+
+    # Punto de Dotación Post-Shock E₁
+    fig_macro.add_trace(go.Scatter(
+        x=[Q1_1], y=[Q2_1], mode='markers+text',
+        text=['E₁ (Dotación)'] if hay_shock else ['E (Dotación)'], textposition='top right',
+        marker=dict(color='#D97706', size=11, symbol='diamond'), name="Dotación E₁" if hay_shock else "Dotación E"
+    ))
+
+    # Óptimo de Consumo Post-Shock C₁*
+    fig_macro.add_trace(go.Scatter(
+        x=[C1_1_opt], y=[C2_1_opt], mode='markers+text',
+        text=['C₁* (Óptimo)'] if hay_shock else ['C* (Óptimo)'], textposition='top right',
+        marker=dict(color='#1D4ED8', size=12, symbol='star'), name="Óptimo C₁*" if hay_shock else "Óptimo C*"
+    ))
+
+    # Líneas de Proyección al Punto Óptimo
+    fig_macro.add_vline(x=C1_1_opt, line_dash="dot", line_color="#1D4ED8" if hay_shock else "gray")
+    fig_macro.add_hline(y=C2_1_opt, line_dash="dot", line_color="#1D4ED8" if hay_shock else "gray")
+
+    fig_macro.update_layout(
+        template="plotly_white",
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='#111827', size=12),
+        xaxis=dict(
+            title=dict(text="Consumo Presente (C₁)", font=dict(color='#111827', size=13)),
+            tickfont=dict(color='#111827', size=11),
+            range=[0, max_c1],
+            showline=True, linecolor='#374151', linewidth=1.5,
+            gridcolor='#E5E7EB'
+        ),
+        yaxis=dict(
+            title=dict(text="Consumo Futuro (C₂)", font=dict(color='#111827', size=13)),
+            tickfont=dict(color='#111827', size=11),
+            range=[0, max_c1 * (1 + max(r0, r1))],
+            showline=True, linecolor='#374151', linewidth=1.5,
+            gridcolor='#E5E7EB'
+        ),
+        legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.95)", font=dict(color='#111827')),
+        margin=dict(l=20, r=20, t=20, b=20), height=520
+    )
+
+    st.plotly_chart(fig_macro, use_container_width=True)
+
+    # --- LEYENDA EXPLICATIVA DINÁMICA DE SHOCKS ---
+    if hay_shock:
+        explicacion_dinamica = "### ⚡ Diagnóstico Dinámico del Shock Aplicado:\n"
         
-        st.sidebar.subheader("🎛️ Parámetros Estacionarios")
-        y_ee = st.sidebar.slider("Ingreso Base Estacionario (Y₀)", 10.0, 100.0, 50.0, 5.0)
-        r = st.sidebar.slider("Tasa de Interés Real (r)", 0.01, 0.20, 0.05, 0.01, format="%.2f")
-        horizonte_t = 10
-        
-        st.sidebar.subheader("⚡ Tipología de Shocks en t=1")
-        tipo_shock = st.sidebar.selectbox(
-            "Seleccione la naturaleza del shock de ingreso:",
-            ["Temporal Transitorio (Solo en t=1)", 
-             "Permanente (De t=1 en adelante)", 
-             "Futuro Anticipado Positivo (Anuncio en t=1, ocurre en t=4)",
-             "Futuro Anticipado Negativo (Anuncio en t=1, ocurre en t=4)"]
-        )
-        magnitud_shock = st.sidebar.slider("Magnitud del Shock (ΔY)", -30.0, 30.0, 0.0, 5.0) # AJUSTE: Arranca en 0.0 para evitar desvíos iniciales
-        
-        st.sidebar.subheader("🛡️ Imperfecciones de Mercado")
-        restriccion_liquidez = st.sidebar.checkbox("Activar Restricción de Liquidez Estricta (No Endeudamiento)")
-
-        # --- CONSTRUCCIÓN DE VECTORES PARA LA DINÁMICA DE LARGO PLAZO ---
-        t_vec = np.arange(0, horizonte_t + 1)
-        y_trayectoria = np.full(horizonte_t + 1, y_ee, dtype=float)
-        
-        if tipo_shock == "Temporal Transitorio (Solo en t=1)":
-            y_trayectoria[1] = y_ee + magnitud_shock
-        elif tipo_shock == "Permanente (De t=1 en adelante)":
-            y_trayectoria[1:] = y_ee + magnitud_shock
-        elif tipo_shock in ["Futuro Anticipado Positivo (Anuncio en t=1, ocurre en t=4)", 
-                            "Futuro Anticipado Negativo (Anuncio en t=1, ocurre en t=4)"]:
-            y_trayectoria[4:] = y_ee + magnitud_shock
-
-        # Factor de descuento agregado para los períodos futuros colapsados (t=2 a t=10)
-        gamma_futuro = sum(1 / ((1 + r) ** (t - 1)) for t in range(2, horizonte_t + 1))
-
-        # --- SIMULACIÓN 1: CONSUMIDOR TEÓRICO LIBRE ---
-        c_libre = np.zeros(horizonte_t + 1)
-        a_libre = np.zeros(horizonte_t + 1)
-        c_libre[0] = y_ee
-        
-        vpi_1 = sum(y_trayectoria[t] / ((1 + r) ** (t - 1)) for t in range(1, horizonte_t + 1))
-        factor_anualidad = sum(1 / ((1 + r) ** (t - 1)) for t in range(1, horizonte_t + 1))
-        c_p_optimo = vpi_1 / factor_anualidad
-        
-        for t in range(1, horizonte_t + 1):
-            c_libre[t] = c_p_optimo
-            a_libre[t] = a_libre[t-1] * (1 + r) + y_trayectoria[t] - c_libre[t]
-
-        # --- SIMULACIÓN 2: CONSUMIDOR CON RESTRICCIÓN DE LIQUIDEZ ---
-        c_restric = np.zeros(horizonte_t + 1)
-        a_restric = np.zeros(horizonte_t + 1)
-        c_restric[0] = y_ee
-        
-        for t in range(1, horizonte_t + 1):
-            vpi_rem = sum(y_trayectoria[k] / ((1 + r) ** (k - t)) for k in range(t, horizonte_t + 1))
-            fac_rem = sum(1 / ((1 + r) ** (k - t)) for k in range(t, horizonte_t + 1))
-            c_deseado = (a_restric[t-1] * (1 + r) + vpi_rem) / fac_rem
-            
-            if c_deseado > (y_trayectoria[t] + a_restric[t-1] * (1 + r)):
-                c_restric[t] = y_trayectoria[t] + a_restric[t-1] * (1 + r)
-                a_restric[t] = 0.0
+        if r1 != r0:
+            pivot_txt = "Giro en torno al punto de dotación E"
+            if r1 > r0:
+                explicacion_dinamica += f"* **Incremento en la Tasa de Interés ($r_0 = {r0:.2f} \\to r_1 = {r1:.2f}$):** La restricción presupuestaria gira en sentido horario volviéndose más empinada. Aumenta el costo de oportunidad del consumo presente. "
+                if S1_0 > 0:
+                    explicacion_dinamica += f"Al ser un **agente ahorrador ($S_1 > 0$)**, el Efecto Ingreso es positivo y refuerza el consumo futuro ($C_2^*$), mientras que el Efecto Sustitución desincentiva $C_1^*$.\n"
+                else:
+                    explicacion_dinamica += f"Al ser un **agente prestatario ($S_1 < 0$)**, el alza de tasa genera un Efecto Ingreso negativo que reduce el bienestar y contrae el consumo presente ($C_1^*$).\n"
             else:
-                c_restric[t] = c_deseado
-                a_restric[t] = a_restric[t-1] * (1 + r) + y_trayectoria[t] - c_restric[t]
+                explicacion_dinamica += f"* **Caída en la Tasa de Interés ($r_0 = {r0:.2f} \\to r_1 = {r1:.2f}$):** La restricción presupuestaria gira en sentido antihorario volviéndose más plana, abaratando el consumo presente respecto al futuro.\n"
+        
+        if Q1_1 != Q1_0 or Q2_1 != Q2_0:
+            explicacion_dinamica += f"* **Variación en los Ingresos ($\Delta Q$):** Desplaza en forma paralela la restricción presupuestaria. La Riqueza Humana $(\\Omega)$ varía de **USD {Omega0:.1f}** a **USD {Omega1:.1f}**, permitiendo alcanzar una curva de indiferencia más alta ($U_1$).\n"
 
-        # --- COMPRESIÓN BIDIMENSIONAL PARA EL GRÁFICO ESTÁTICO DE SHOCKS (En t=1) ---
-        y1_inicial, y_fut_inicial = y_ee, y_ee * gamma_futuro
-        y1_final = y_trayectoria[1]
-        y_fut_final = sum(y_trayectoria[t] / ((1 + r) ** (t - 1)) for t in range(2, horizonte_t + 1))
-        
-        omega_2d_inicial = y1_inicial + y_fut_inicial
-        omega_2d_final = y1_final + y_fut_final
-        
-        c1_inicial_plot, cfut_inicial_plot = y_ee, y_ee * gamma_futuro
-        c1_libre_plot, cfut_libre_plot = c_libre[1], c_libre[1] * gamma_futuro
-        c1_restric_plot, cfut_restric_plot = c_restric[1], sum(c_restric[t] / ((1 + r) ** (t - 1)) for t in range(2, horizonte_t + 1))
-
-        # DESPLIEGUE DE INTERFAZ EN PARALELO
-        st.subheader(f"📊 Módulo 2: Geometría Intertemporal de Shocks vs Senda de Transición")
-        col_g1, col_g2 = st.columns(2)
-        
-        with col_g1:
-            st.write("**Desplazamiento Analítico de Rectas e Isocuantas (t=1)**")
-            # El dominio del grid se extiende para cubrir los interceptos teóricos de las RP
-            c1_grid = np.linspace(0.1, max(omega_2d_inicial, omega_2d_final) * 1.1, 300)
-            fig_macro_static = go.Figure()
-            
-            # Restricción Presupuestaria Inicial (Gris) y Final (Azul)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_inicial - c1_grid, name="RP Inicial (Estado Est.)", line=dict(color='gray', dash='dash')))
-            
-            if restriccion_liquidez:
-                grid_restric = np.where(c1_grid <= y1_final, omega_2d_final - c1_grid, np.nan)
-                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=grid_restric, name="RP Final (Con Restricción)", line=dict(color='crimson', width=3)))
-                fig_macro_static.add_vline(x=y1_final, line_dash="dot", line_color="crimson", annotation_text="Límite Crédito (Y₁)")
+        if rho1 != rho0:
+            if rho1 > rho0:
+                explicacion_dinamica += f"* **Mayor Impaciencia Intertemporal ($\rho_0 = {rho0:.2f} \\to \\rho_1 = {rho1:.2f}$):** El agente valora más el presente. La curva de indiferencia se vuelve más empinada en el plano, reasignando consumo desde $C_2^*$ hacia $C_1^*$.\n"
             else:
-                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_final - c1_grid, name="RP Post-Shock (Libre)", line=dict(color='blue', width=2.5)))
+                explicacion_dinamica += f"* **Mayor Paciencia Intertemporal ($\rho_0 = {rho0:.2f} \\to \\rho_1 = {rho1:.2f}$):** El agente prefiere diferir consumo hacia el futuro, aumentando su tasa de ahorro $S_1$.\n"
 
-            # Isocuantas de utilidad intertemporal
-            u_init_2d = np.log(c1_inicial_plot) + gamma_futuro * np.log(cfut_inicial_plot / gamma_futuro)
-            indif_init_2d = gamma_futuro * np.exp((u_init_2d - np.log(c1_grid)) / gamma_futuro)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=indif_init_2d, name="U₀ (EE Inicial)", line=dict(color='green', width=1.5)))
-            
-            u_libre_2d = np.log(c1_libre_plot) + gamma_futuro * np.log(cfut_libre_plot / gamma_futuro)
-            indif_libre_2d = gamma_futuro * np.exp((u_libre_2d - np.log(c1_grid)) / gamma_futuro)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=indif_libre_2d, name="U₁ (Post-Shock Libre)", line=dict(color='blue', width=1.5, dash='dot')))
+        st.success(explicacion_dinamica)
 
-            # Mapeo de Puntos de Decisión e Ingresos
-            fig_macro_static.add_trace(go.Scatter(x=[y1_inicial], y=[y_fut_inicial], mode='markers+text', text=['X₀ (Dotación EE)'], textposition='bottom left', marker=dict(color='black', symbol='square', size=8), name="Dotación Inicial"))
-            fig_macro_static.add_trace(go.Scatter(x=[y1_final], y=[y_fut_final], mode='markers+text', text=['X₁ (Dotación Shock)'], textposition='top right', marker=dict(color='purple', symbol='x', size=10), name="Dotación Post-Shock"))
-            fig_macro_static.add_trace(go.Scatter(x=[c1_libre_plot], y=[cfut_libre_plot], mode='markers+text', text=['A óptimo (Libre)'], textposition='top left', marker=dict(color='blue', size=10), showlegend=False))
-            
-            if restriccion_liquidez:
-                fig_macro_static.add_trace(go.Scatter(x=[c1_restric_plot], y=[cfut_restric_plot], mode='markers+text', text=['B óptimo (Restringido)'], textposition='bottom right', marker=dict(color='crimson', size=10), showlegend=False))
-
-            # Rayo de suavización perfecta corregido por el factor temporal
-            fig_macro_static.add_trace(go.Scatter(
-                x=c1_grid, y=c1_grid * gamma_futuro, 
-                name="Senda de Suavización Plena", 
-                line=dict(color='darkgray', dash='dot', width=1.5)
-            ))
-
-            # AJUSTE DE VISUALIZACIÓN: Escalas asimétricas personalizadas para centrar la acción analítica
-            fig_macro_static.update_layout(
-                xaxis_title="Consumo Presente Actual (C₁)", yaxis_title="VP del Consumo Futuro Acumulado (C_Futuro)",
-                xaxis=dict(range=[0, max(y1_inicial, y1_final) * 2.5]), # Centrado horizontal elegante
-                yaxis=dict(range=[0, max(y_fut_inicial, y_fut_final) * 1.3]), # Proporción vertical balanceada
-                legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.7)"), margin=dict(l=20, r=20, t=20, b=20), height=450
-            )
-            st.plotly_chart(fig_macro_static, use_container_width=True)
-
-        with col_g2:
-            st.write("**Senda Temporal de Transición Dinámica ($t=0$ a $t=10$)**")
-            fig_lineas = go.Figure()
-            fig_lineas.add_trace(go.Scatter(x=t_vec, y=y_trayectoria, name="Ingreso Disponible (Yₜ)", line=dict(color='black', width=3, shape='hv')))
-            fig_lineas.add_trace(go.Scatter(x=t_vec, y=c_libre, name="Consumo Permanente (Libre)", line=dict(color='blue', width=2.5, dash='dash')))
-            
-            if restriccion_liquidez:
-                fig_lineas.add_trace(go.Scatter(x=t_vec, y=c_restric, name="Consumo Efectivo (Con Restricción)", line=dict(color='crimson', width=3)))
-                
-            fig_lineas.add_hline(y=y_ee, line_dash="dot", line_color="gray", annotation_text="EE Base (t=0)", annotation_position="bottom left")
-            fig_lineas.update_layout(
-                xaxis=dict(tickmode='linear', tick0=0, dtick=1, title="Períodos Temporales (t)"), yaxis=dict(title="Escala de Valores Monetarios"),
-                margin=dict(l=20, r=20, t=20, b=20), height=450, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.8)")
-            )
-            st.plotly_chart(fig_lineas, use_container_width=True)
-
-        # Gráfico complementario secundario: Evolución del Stock de Activos Netos
-        st.subheader("🏦 Senda de Acumulación / Desacumulación de Activos Netos ($A_t$)")
-        fig_assets = go.Figure()
-        fig_assets.add_trace(go.Scatter(x=t_vec, y=a_libre, name="Activos Sin Restricción", line=dict(color='blue', dash='dash')))
-        if restriccion_liquidez:
-            fig_assets.add_trace(go.Scatter(x=t_vec, y=a_restric, name="Activos Con Restricción", line=dict(color='crimson', width=2.5)))
-        fig_assets.add_hline(y=0.0, line_color="black", line_width=1)
-        fig_assets.update_layout(
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1, title="Períodos Temporales (t)"), yaxis=dict(title="Stock de Activos Netos"),
-            margin=dict(l=20, r=20, t=20, b=20), height=250, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
-        )
-        st.plotly_chart(fig_assets, use_container_width=True)
-
-        # --- RECUADRO PEDAGÓGICO ADAPTATIVO ---
-        st.success("### 🎓 Guía de Análisis Macroeconómico para el Alumno")
-        
-        if tipo_shock == "Temporal Transitorio (Solo en t=1)":
-            st.write("""
-            * **Interpretación de la Estática (Gráfico Izquierdo):** El shock positivo mueve la dotación **X₁** horizontalmente a la derecha de **X₀**. La restricción presupuestaria se expande de forma paralela. Como el agente desea suavizar consumo, el óptimo libre busca una isocuanta más alta desplazándose principalmente hacia arriba en el eje futuro. Consume poco hoy y guarda el resto.
-            * **Conexión con la Dinámica (Gráfico Derecho):** En la trayectoria temporal, el consumo se mantiene perfectamente estable (plano). El pico transitorio del ingreso en $t=1$ se absorbe por completo mediante un salto en la acumulación de activos financieros ($A_t$).
-            """)
-        elif tipo_shock == "Permanente (De t=1 en adelante)":
-            st.write("""
-            * **Interpretación de la Estática (Gráfico Izquierdo):** Al incrementarse el ingreso en todos los períodos, la dotación salta en diagonal hacia arriba y a la derecha (**X₁**). La restricción presupuestaria se desplaza masivamente hacia afuera. El nuevo punto óptimo de tangencia coincide perfectamente sobre la nueva dotación. 
-            * **Conexión con la Dinámica (Gráfico Derecho):** Dado que la variación alteró el ingreso permanente en la misma proporción que el ingreso corriente, el consumo da un salto idéntico en $t=1$ y se estabiliza. No hay incentivos para ahorrar ni desahorrar; la senda de activos netos se mantiene inalterada en cero.
-            """)
-        else:  # Shocks anticipados
-            st.write("""
-            * **El Rol de las Expectativas Racionales (Previsión Perfecta):** Note que en el período $t=1$, el ingreso físico aún no se ha modificado (el eje X de la dotación no cambia). Sin embargo, como el consumidor anticipa el cambio futuro, la dotación se desplaza verticalmente en el gráfico izquierdo. La restricción presupuestaria se expande por "efecto riqueza" desde hoy. El consumidor libre salta de inmediato a un consumo más alto en el período 1.
-            * **La Dinámica frente a Restricciones de Liquidez:** * Si el shock futuro es *positivo* y se activa la restricción de liquidez, la recta de balance sufre un quiebre estricto (kink) vertical en el nivel de ingreso corriente actual. El consumidor no puede endeudarse para adelantar consumo. Verás en el gráfico analítico que queda atrapado en una solución de esquina (**Punto B**) y en la trayectoria el consumo no se moverá hasta que físicamente llegue el período $t=4$.
-                * Si el shock futuro es *negativo*, el agente necesita ahorrar de forma preventiva. Dado que el sistema financiero permite resguardar valor sin inconvenientes, el consumidor restringido replica con total exactitud al consumidor libre, contrayendo su nivel de consumo desde el período 1.
-            """)
+    # --- RECUADRO PEDAGÓGICO GENERAL DE SÍNTESIS ---
+    st.info(f"""
+    ### 🎓 Lección de Análisis Macroeconómico (Sachs & Larraín)
+    
+    El modelo de **Consumo Intertemporal de Fisher** demuestra cómo las familias distribuyen su ingreso a lo largo del tiempo para maximizar su bienestar:
+    
+    1. **Condición de Tangencia:** En el óptimo, la Tasa Marginal de Sustitución Intertemporal ($TMS = 1 + \\rho$) se iguala al precio relativo del consumo presente en términos del futuro ($1 + r$).
+    2. **Suavización del Consumo (*Consumption Smoothing*):** Los agentes prefieren trayectorias de consumo estables frente a ingresos volátiles. Por ello, $C_1^*$ depende del valor presente de la riqueza total de por vida $(\\Omega = Q_1 + \\frac{{Q_2}}{{1+r}})$, y no solo del ingreso corriente $Q_1$.
+    3. **Efectos Ingreso y Sustitución ($\Delta r$):** Un cambio en la tasa de interés ($r$) altera la pendiente de la restricción presupuestaria (giro sobre la dotación $E$). El resultado neto sobre $C_1^*$ depende del contrapeso entre el **Efecto Sustitución** (que siempre reduce $C_1^*$ ante subas de $r$) y el **Efecto Ingreso** (cuyo signo depende de si el agente es Ahorrador o Prestatario).
+    """)
