@@ -20,30 +20,29 @@ st.markdown("""
 # =============================================================================
 # SECTOR DE SEGURIDAD / AUTENTICACIÓN INTEGRADA CON EL AULA VIRTUAL
 # =============================================================================
+# =============================================================================
+# SECTOR DE SEGURIDAD / AUTENTICACIÓN INTEGRADA CON EL AULA VIRTUAL
+# =============================================================================
 def verificar_autenticacion():
     CLAVE_SECRETA = "Macro2026"
     
-    # 1. Verificar si el tráfico viene del Campus Virtual UNER
+    # 1. Si se carga dentro de un iFrame en Moodle (Streamlit envía 'embed'), otorga acceso automático
+    qp = st.query_params
+    if "embed" in qp or qp.get("embed") == "true" or "uner" in qp:
+        return True
+
+    # 2. Respaldo por encabezado HTTP Referer
     try:
-        headers = st.context.headers
-        referer = headers.get("referer", "").lower()
-        
-        # Permitir si el origen es de la UNER
-        if any(dominio in referer for dominio in ["campus.uner.edu.ar", "uner.edu.ar"]):
+        referer = st.context.headers.get("referer", "").lower()
+        if any(dominio in referer for dominio in ["uner.edu.ar", "moodle"]):
             return True
     except Exception:
         pass
 
-    # 2. Respaldo por URL (por si el navegador bloquea el Referer en el iframe)
-    # En Moodle pondrías: src="https://baumoltobin.streamlit.app/?uner=true"
-    query_params = st.query_params
-    if query_params.get("uner") == "true" or query_params.get("embed") == "true":
-        return True
-
-    # 3. Pantalla de bloqueo si alguien intenta acceder directamente fuera del campus
-    st.sidebar.subheader("🔒 Acceso Restringido - Cátedra Macroeconomía II")
+    # 3. Si el usuario ingresa directamente por la URL en una pestaña limpia -> Pide contraseña
+    st.sidebar.subheader("🔒 Acceso Restringido")
     password_ingresado = st.sidebar.text_input(
-        "Este simulador está integrado al Campus Virtual de la UNER. Introduce la clave de la cátedra para acceso directo:", 
+        "Este simulador está integrado al Campus Virtual. Introduce la clave de la cátedra:", 
         type="password"
     )
     
@@ -52,7 +51,7 @@ def verificar_autenticacion():
     elif password_ingresado:
         st.sidebar.error("❌ Clave incorrecta")
         
-    st.warning("⚠️ **Acceso No Autorizado:** Por favor, interactúa con este modelo directamente desde tu aula en el Campus Virtual de la UNER.")
+    st.warning("⚠️ **Acceso No Autorizado:** Por favor, interactúa con este modelo directamente desde las lecturas de tu Aula Virtual.")
     return False
 
 # Función auxiliar para la construcción de la curva en diente de sierra (Sawtooth)
