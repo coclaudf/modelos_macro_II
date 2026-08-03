@@ -23,19 +23,27 @@ st.markdown("""
 def verificar_autenticacion():
     CLAVE_SECRETA = "Macro2026"
     
+    # 1. Verificar si el tráfico viene del Campus Virtual UNER
     try:
         headers = st.context.headers
         referer = headers.get("referer", "").lower()
-        fetch_dest = headers.get("sec-fetch-dest", "").lower()
         
-        if fetch_dest == "iframe" or "moodle" in referer or "canvas" in referer or "classroom" in referer:
+        # Permitir si el origen es de la UNER
+        if any(dominio in referer for dominio in ["campus.uner.edu.ar", "uner.edu.ar"]):
             return True
     except Exception:
         pass
 
-    st.sidebar.subheader("🔒 Acceso Restringido")
+    # 2. Respaldo por URL (por si el navegador bloquea el Referer en el iframe)
+    # En Moodle pondrías: src="https://baumoltobin.streamlit.app/?uner=true"
+    query_params = st.query_params
+    if query_params.get("uner") == "true" or query_params.get("embed") == "true":
+        return True
+
+    # 3. Pantalla de bloqueo si alguien intenta acceder directamente fuera del campus
+    st.sidebar.subheader("🔒 Acceso Restringido - Cátedra Macroeconomía II")
     password_ingresado = st.sidebar.text_input(
-        "Este simulador está integrado al Aula Virtual. Introduce la clave de la cátedra para acceso directo:", 
+        "Este simulador está integrado al Campus Virtual de la UNER. Introduce la clave de la cátedra para acceso directo:", 
         type="password"
     )
     
@@ -44,8 +52,7 @@ def verificar_autenticacion():
     elif password_ingresado:
         st.sidebar.error("❌ Clave incorrecta")
         
-    st.warning("⚠️ **Acceso No Autorizado:** Por favor, interactúa con este modelo directamente desde las lecturas de tu Aula Virtual o solicita la clave de desarrollo a la cátedra.")
-    st.info("💡 *Nota pedagógica: Diseñamos estas herramientas para que sigan el hilo de tus apuntes teóricos dentro de la plataforma de estudio.*")
+    st.warning("⚠️ **Acceso No Autorizado:** Por favor, interactúa con este modelo directamente desde tu aula en el Campus Virtual de la UNER.")
     return False
 
 # Función auxiliar para la construcción de la curva en diente de sierra (Sawtooth)
