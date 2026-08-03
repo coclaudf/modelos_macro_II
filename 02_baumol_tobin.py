@@ -9,18 +9,36 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS: Oculta la marca/menú de Streamlit pero preserva la barra lateral
+# =============================================================================
+# FORZADO DE MODO CLARO (FONDO BLANCO UNIVERSAL) Y ESTILOS VISUALES
+# =============================================================================
 st.markdown("""
     <style>
-    /* 1. Ocultar menú de opciones, footer y marca de Streamlit */
-    #MainMenu { visibility: hidden !important; }
-    footer { visibility: hidden !important; }
-    header { visibility: hidden !important; }
-    div[data-testid="stHeader"] { display: none !important; }
+    /* 1. Forzar fondo blanco y texto oscuro en toda la app */
+    .stApp, [data-testid="stAppViewContainer"] {
+        background-color: #FFFFFF !important;
+        color: #1F2937 !important;
+    }
+    
+    /* 2. Fondo claro y borde elegante para la barra lateral */
+    section[data-testid="stSidebar"] {
+        background-color: #F8FAFC !important;
+        border-right: 1px solid #E2E8F0 !important;
+    }
+    
+    /* 3. Asegurar legibilidad del texto de controles e insumos */
+    .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+        color: #1F2937 !important;
+    }
+    
+    /* 4. Respetar los colores de contraste dentro de alertas de Streamlit */
+    div[data-testid="stAlert"] p, div[data-testid="stAlert"] span {
+        color: inherit !important;
+    }
 
-    /* 2. Aprovechar el espacio superior recortado */
+    /* 5. Optimización del espacio vertical superior */
     .block-container {
-        padding-top: 1.2rem !important;
+        padding-top: 1.5rem !important;
         padding-bottom: 1rem !important;
     }
     </style>
@@ -29,13 +47,10 @@ st.markdown("""
 # =============================================================================
 # SECTOR DE SEGURIDAD / AUTENTICACIÓN INTEGRADA CON EL AULA VIRTUAL
 # =============================================================================
-# =============================================================================
-# SECTOR DE SEGURIDAD / AUTENTICACIÓN INTEGRADA CON EL AULA VIRTUAL
-# =============================================================================
 def verificar_autenticacion():
     CLAVE_SECRETA = "Macro2026"
     
-    # 1. Si se carga dentro de un iFrame en Moodle (Streamlit envía 'embed'), otorga acceso automático
+    # 1. Pase directo para iFrames en Moodle (Parámetros 'embed' o 'uner')
     qp = st.query_params
     if "embed" in qp or qp.get("embed") == "true" or "uner" in qp:
         return True
@@ -48,7 +63,7 @@ def verificar_autenticacion():
     except Exception:
         pass
 
-    # 3. Si el usuario ingresa directamente por la URL en una pestaña limpia -> Pide contraseña
+    # 3. Pantalla de bloqueo con contraseña para acceso directo por navegador
     st.sidebar.subheader("🔒 Acceso Restringido")
     password_ingresado = st.sidebar.text_input(
         "Este simulador está integrado al Campus Virtual. Introduce la clave de la cátedra:", 
@@ -155,7 +170,7 @@ if verificar_autenticacion():
     col_g1, col_g2 = st.columns(2)
 
     # -------------------------------------------------------------------------
-    # COLUMNA 1: MINIMIZACIÓN DE COSTOS (NEGRO SÓLIDO INICIAL VS COLOR SHOCK)
+    # COLUMNA 1: MINIMIZACIÓN DE COSTOS (FONDO BLANCO CONFIGURADO)
     # -------------------------------------------------------------------------
     with col_g1:
         st.write("**Minimización de Costos Totales de Manejo de Efectivo**")
@@ -217,17 +232,20 @@ if verificar_autenticacion():
             fig_costos.add_vline(x=N0_opt, line_dash="dot", line_color="black")
 
         fig_costos.update_layout(
+            template="plotly_white",
+            paper_bgcolor='white',
+            plot_bgcolor='white',
             xaxis_title="Número de Transacciones / Viajes (N)",
             yaxis_title="Costos en Términos Reales",
-            xaxis=dict(range=[0, max(N_max, 5.0)]),
-            yaxis=dict(range=[0, max(CT0_opt, CT1_opt) * 2.2]),
-            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.7)"),
+            xaxis=dict(range=[0, max(N_max, 5.0)], gridcolor='#F0F0F0'),
+            yaxis=dict(range=[0, max(CT0_opt, CT1_opt) * 2.2], gridcolor='#F0F0F0'),
+            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.9)"),
             margin=dict(l=20, r=20, t=20, b=20), height=450
         )
         st.plotly_chart(fig_costos, use_container_width=True)
 
     # -------------------------------------------------------------------------
-    # COLUMNA 2: TRAYECTORIA TEMPORAL "DIENTE DE SIERRA" (COMPARATIVA)
+    # COLUMNA 2: TRAYECTORIA TEMPORAL "DIENTE DE SIERRA" (FONDO BLANCO CONFIGURADO)
     # -------------------------------------------------------------------------
     with col_g2:
         st.write("**Patrón Temporal de Saldos Monetarios Reales (Diente de Sierra)**")
@@ -259,16 +277,19 @@ if verificar_autenticacion():
         )
 
         fig_saw.update_layout(
+            template="plotly_white",
+            paper_bgcolor='white',
+            plot_bgcolor='white',
             xaxis_title="Días del Período / Mes (t)",
             yaxis_title="Saldos Reales Retenidos (M/P)",
-            xaxis=dict(range=[0, 30], tickmode='linear', tick0=0, dtick=5),
-            yaxis=dict(range=[0, max(Q0 / N0_opt, Q1 / N1_opt) * 1.25]),
-            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.7)"),
+            xaxis=dict(range=[0, 30], tickmode='linear', tick0=0, dtick=5, gridcolor='#F0F0F0'),
+            yaxis=dict(range=[0, max(Q0 / N0_opt, Q1 / N1_opt) * 1.25], gridcolor='#F0F0F0'),
+            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.9)"),
             margin=dict(l=20, r=20, t=20, b=20), height=450
         )
         st.plotly_chart(fig_saw, use_container_width=True)
 
-    # --- LEYENDA EXPLICATIVA DINÁMICA DE SHOCKS (SINTAXIS ESCAPADA DE LATEX) ---
+    # --- LEYENDA EXPLICATIVA DINÁMICA DE SHOCKS ---
     if hay_shock:
         explicacion_dinamica = "### ⚡ Diagnóstico Dinámico del Shock Aplicado:\n"
         
@@ -292,7 +313,7 @@ if verificar_autenticacion():
         
         st.success(explicacion_dinamica)
 
-    # --- RECUADRO PEDAGÓGICO GENERAL DE SÍNTESIS (SINTAXIS ESCAPADA DE LATEX) ---
+    # --- RECUADRO PEDAGÓGICO GENERAL DE SÍNTESIS ---
     costo_trans_val = b1 * N1_opt
     costo_oport_val = i1 * (Q1 / (2 * N1_opt))
 
