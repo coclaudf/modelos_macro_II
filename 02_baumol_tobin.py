@@ -9,11 +9,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos visuales complementarios
+# Estilos CSS: Oculta la marca/menú de Streamlit pero preserva la barra lateral
 st.markdown("""
     <style>
-    .block-container { padding-top: 2rem; }
-    .stAlert { margin-top: 1rem; }
+    /* 1. Ocultar menú de opciones, footer y marca de Streamlit */
+    #MainMenu { visibility: hidden !important; }
+    footer { visibility: hidden !important; }
+    header { visibility: hidden !important; }
+    div[data-testid="stHeader"] { display: none !important; }
+
+    /* 2. Aprovechar el espacio superior recortado */
+    .block-container {
+        padding-top: 1.2rem !important;
+        padding-bottom: 1rem !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
