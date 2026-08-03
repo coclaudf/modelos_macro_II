@@ -10,14 +10,14 @@ st.set_page_config(
 )
 
 # =============================================================================
-# FORZADO DE ALTO CONTRASTE (BLINDAJE PARA MOODLE Y MODO OSCURO)
+# FORZADO DE ALTO CONTRASTE (BLINDAJE DE TEXTO UNIFORME PARA MOODLE)
 # =============================================================================
 st.markdown("""
     <style>
     /* 1. Fondo blanco puro universal */
     .stApp, [data-testid="stAppViewContainer"] {
         background-color: #FFFFFF !important;
-        color: #111827 !important;
+        color: #0F172A !important;
     }
     
     /* 2. Barra lateral en gris muy suave con bordes oscuros */
@@ -28,36 +28,34 @@ st.markdown("""
     
     /* 3. Forzado de texto oscuro general */
     .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
-        color: #111827 !important;
+        color: #0F172A !important;
     }
 
-    /* 4. BLINDAJE DE CAJAS ST.SUCCESS (DIAGNÓSTICO DE ALTO CONTRASTE) */
+    /* 4. BLINDAJE UNIFORME DE CAJAS ST.SUCCESS (DIAGNÓSTICO DINÁMICO) */
     div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) {
-        background-color: #D1FAE5 !important;
-        border: 1px solid #059669 !important;
+        background-color: #ECFDF5 !important;
+        border: 1.5px solid #059669 !important;
         border-radius: 8px !important;
     }
-    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) p,
-    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) span,
-    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) h3 {
+    /* Fuerza el mismo verde oscuro uniforme a ABSOLUTAMENTE TODO el texto, números y LaTeX */
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) * {
         color: #064E3B !important;
-        font-weight: 600 !important;
+        font-weight: 500 !important;
     }
 
-    /* 5. BLINDAJE DE CAJAS ST.INFO (RECUADRO GENERAL) */
+    /* 5. BLINDAJE UNIFORME DE CAJAS ST.INFO (RECUADRO GENERAL DE SÍNTESIS) */
     div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) {
         background-color: #EFF6FF !important;
-        border: 1px solid #2563EB !important;
+        border: 1.5px solid #2563EB !important;
         border-radius: 8px !important;
     }
-    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) p,
-    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) span,
-    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) h3 {
+    /* Fuerza el mismo azul oscuro uniforme a ABSOLUTAMENTE TODO el texto, números y LaTeX */
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) * {
         color: #1E3A8A !important;
         font-weight: 500 !important;
     }
 
-    /* 6. Optimización de márgenes */
+    /* 6. Optimización de márgenes superiores */
     .block-container {
         padding-top: 1.5rem !important;
         padding-bottom: 1rem !important;
@@ -189,7 +187,7 @@ if verificar_autenticacion():
     col_g1, col_g2 = st.columns(2)
 
     # -------------------------------------------------------------------------
-    # COLUMNA 1: MINIMIZACIÓN DE COSTOS (EJES DEFINIDOS CON ALTO CONTRASTE)
+    # COLUMNA 1: MINIMIZACIÓN DE COSTOS
     # -------------------------------------------------------------------------
     with col_g1:
         st.write("**Minimización de Costos Totales de Manejo de Efectivo**")
@@ -273,7 +271,7 @@ if verificar_autenticacion():
         st.plotly_chart(fig_costos, use_container_width=True)
 
     # -------------------------------------------------------------------------
-    # COLUMNA 2: TRAYECTORIA TEMPORAL "DIENTE DE SIERRA" (EJES CON ALTO CONTRASTE)
+    # COLUMNA 2: TRAYECTORIA TEMPORAL "DIENTE DE SIERRA"
     # -------------------------------------------------------------------------
     with col_g2:
         st.write("**Patrón Temporal de Saldos Monetarios Reales (Diente de Sierra)**")
