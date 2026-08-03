@@ -10,33 +10,54 @@ st.set_page_config(
 )
 
 # =============================================================================
-# FORZADO DE MODO CLARO (FONDO BLANCO UNIVERSAL) Y ESTILOS VISUALES
+# FORZADO DE ALTO CONTRASTE (BLINDAJE PARA MOODLE Y MODO OSCURO)
 # =============================================================================
 st.markdown("""
     <style>
-    /* 1. Forzar fondo blanco y texto oscuro en toda la app */
+    /* 1. Fondo blanco puro universal */
     .stApp, [data-testid="stAppViewContainer"] {
         background-color: #FFFFFF !important;
-        color: #1F2937 !important;
+        color: #111827 !important;
     }
     
-    /* 2. Fondo claro y borde elegante para la barra lateral */
+    /* 2. Barra lateral en gris muy suave con bordes oscuros */
     section[data-testid="stSidebar"] {
         background-color: #F8FAFC !important;
-        border-right: 1px solid #E2E8F0 !important;
+        border-right: 2px solid #CBD5E1 !important;
     }
     
-    /* 3. Asegurar legibilidad del texto de controles e insumos */
+    /* 3. Forzado de texto oscuro general */
     .stApp p, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
-        color: #1F2937 !important;
-    }
-    
-    /* 4. Respetar los colores de contraste dentro de alertas de Streamlit */
-    div[data-testid="stAlert"] p, div[data-testid="stAlert"] span {
-        color: inherit !important;
+        color: #111827 !important;
     }
 
-    /* 5. Optimización del espacio vertical superior */
+    /* 4. BLINDAJE DE CAJAS ST.SUCCESS (DIAGNÓSTICO DE ALTO CONTRASTE) */
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) {
+        background-color: #D1FAE5 !important;
+        border: 1px solid #059669 !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) p,
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) span,
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentSuccess"]) h3 {
+        color: #064E3B !important;
+        font-weight: 600 !important;
+    }
+
+    /* 5. BLINDAJE DE CAJAS ST.INFO (RECUADRO GENERAL) */
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) {
+        background-color: #EFF6FF !important;
+        border: 1px solid #2563EB !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) p,
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) span,
+    div[data-testid="stAlert"]:has(div[data-testid="stNotificationContentInfo"]) h3 {
+        color: #1E3A8A !important;
+        font-weight: 500 !important;
+    }
+
+    /* 6. Optimización de márgenes */
     .block-container {
         padding-top: 1.5rem !important;
         padding-bottom: 1rem !important;
@@ -127,13 +148,11 @@ if verificar_autenticacion():
     i0 = st.sidebar.slider("Tasa de Interés Nominal Inicial (i₀)", 0.01, 0.50, 0.10, 0.01, format="%.2f")
 
     # --- CÁLCULOS MATEMÁTICOS DE OPTIMIZACIÓN ---
-    # Estado Inicial (0)
     N0_opt = np.sqrt((i0 * Q0) / (2 * b0))
     m_p0_opt = Q0 / (2 * N0_opt)
     CT0_opt = b0 * N0_opt + i0 * (Q0 / (2 * N0_opt))
     dias_entre_retiros0 = 30 / N0_opt
 
-    # Estado Post-Shock (1)
     N1_opt = np.sqrt((i1 * Q1) / (2 * b1))
     m_p1_opt = Q1 / (2 * N1_opt)
     CT1_opt = b1 * N1_opt + i1 * (Q1 / (2 * N1_opt))
@@ -170,7 +189,7 @@ if verificar_autenticacion():
     col_g1, col_g2 = st.columns(2)
 
     # -------------------------------------------------------------------------
-    # COLUMNA 1: MINIMIZACIÓN DE COSTOS (FONDO BLANCO CONFIGURADO)
+    # COLUMNA 1: MINIMIZACIÓN DE COSTOS (EJES DEFINIDOS CON ALTO CONTRASTE)
     # -------------------------------------------------------------------------
     with col_g1:
         st.write("**Minimización de Costos Totales de Manejo de Efectivo**")
@@ -180,7 +199,6 @@ if verificar_autenticacion():
         
         fig_costos = go.Figure()
 
-        # CURVAS INICIALES: NEGRO SÓLIDO (Si hay shock)
         if hay_shock:
             costo_trans0 = b0 * N_grid
             costo_oport0 = i0 * (Q0 / (2 * N_grid))
@@ -204,30 +222,29 @@ if verificar_autenticacion():
                 marker=dict(color='black', size=9, symbol='square'), name="Óptimo N₀*"
             ))
 
-        # CURVAS POST-SHOCK: COLOR SÓLIDO
         costo_trans1 = b1 * N_grid
         costo_oport1 = i1 * (Q1 / (2 * N_grid))
         costo_total1 = costo_trans1 + costo_oport1
 
         fig_costos.add_trace(go.Scatter(
             x=N_grid, y=costo_total1, name="CT₁ (Costo Total Post-Shock)" if hay_shock else "CT(N) Costo Total",
-            line=dict(color='blue', width=3.5)
+            line=dict(color='#1D4ED8', width=3.5)
         ))
         fig_costos.add_trace(go.Scatter(
             x=N_grid, y=costo_trans1, name="Transacción b₁·N (Post-Shock)" if hay_shock else "Costo Transaccional (b·N)",
-            line=dict(color='orange', width=2.5)
+            line=dict(color='#D97706', width=2.5)
         ))
         fig_costos.add_trace(go.Scatter(
             x=N_grid, y=costo_oport1, name="Oportunidad i₁·Q₁/2N (Post-Shock)" if hay_shock else "Costo Oportunidad (i·Q/2N)",
-            line=dict(color='green', width=2.5)
+            line=dict(color='#15803D', width=2.5)
         ))
         fig_costos.add_trace(go.Scatter(
             x=[N1_opt], y=[CT1_opt], mode='markers+text',
             text=['N₁* (Óptimo)'] if hay_shock else ['N* (Óptimo)'], textposition='top right',
-            marker=dict(color='blue', size=11, symbol='star'), name="Óptimo N₁*" if hay_shock else "Óptimo N*"
+            marker=dict(color='#1D4ED8', size=11, symbol='star'), name="Óptimo N₁*" if hay_shock else "Óptimo N*"
         ))
 
-        fig_costos.add_vline(x=N1_opt, line_dash="dot", line_color="blue" if hay_shock else "gray")
+        fig_costos.add_vline(x=N1_opt, line_dash="dot", line_color="#1D4ED8" if hay_shock else "gray")
         if hay_shock:
             fig_costos.add_vline(x=N0_opt, line_dash="dot", line_color="black")
 
@@ -235,24 +252,34 @@ if verificar_autenticacion():
             template="plotly_white",
             paper_bgcolor='white',
             plot_bgcolor='white',
-            xaxis_title="Número de Transacciones / Viajes (N)",
-            yaxis_title="Costos en Términos Reales",
-            xaxis=dict(range=[0, max(N_max, 5.0)], gridcolor='#F0F0F0'),
-            yaxis=dict(range=[0, max(CT0_opt, CT1_opt) * 2.2], gridcolor='#F0F0F0'),
-            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.9)"),
+            font=dict(color='#111827', size=12),
+            xaxis=dict(
+                title=dict(text="Número de Transacciones / Viajes (N)", font=dict(color='#111827', size=13)),
+                tickfont=dict(color='#111827', size=11),
+                range=[0, max(N_max, 5.0)],
+                showline=True, linecolor='#374151', linewidth=1.5,
+                gridcolor='#E5E7EB'
+            ),
+            yaxis=dict(
+                title=dict(text="Costos en Términos Reales", font=dict(color='#111827', size=13)),
+                tickfont=dict(color='#111827', size=11),
+                range=[0, max(CT0_opt, CT1_opt) * 2.2],
+                showline=True, linecolor='#374151', linewidth=1.5,
+                gridcolor='#E5E7EB'
+            ),
+            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.95)", font=dict(color='#111827')),
             margin=dict(l=20, r=20, t=20, b=20), height=450
         )
         st.plotly_chart(fig_costos, use_container_width=True)
 
     # -------------------------------------------------------------------------
-    # COLUMNA 2: TRAYECTORIA TEMPORAL "DIENTE DE SIERRA" (FONDO BLANCO CONFIGURADO)
+    # COLUMNA 2: TRAYECTORIA TEMPORAL "DIENTE DE SIERRA" (EJES CON ALTO CONTRASTE)
     # -------------------------------------------------------------------------
     with col_g2:
         st.write("**Patrón Temporal de Saldos Monetarios Reales (Diente de Sierra)**")
         
         fig_saw = go.Figure()
 
-        # Diente de Sierra Inicial en Negro Sólido
         if hay_shock:
             t_dias0, m_p_dias0 = generar_diente_sierra(Q0, N0_opt, dias=30)
             fig_saw.add_trace(go.Scatter(
@@ -264,15 +291,14 @@ if verificar_autenticacion():
                 annotation_text=f"Base = USD {m_p0_opt:.1f}", annotation_position="bottom left"
             )
 
-        # Diente de Sierra Post-Shock en Color
         t_dias1, m_p_dias1 = generar_diente_sierra(Q1, N1_opt, dias=30)
         fig_saw.add_trace(go.Scatter(
             x=t_dias1, y=m_p_dias1, name="Saldo Post-Shock (M/P)₁" if hay_shock else "Saldo Monetario Real (M/P)ₜ",
-            line=dict(color='crimson', width=2.5)
+            line=dict(color='#DC2626', width=2.5)
         ))
 
         fig_saw.add_hline(
-            y=m_p1_opt, line_dash="dash", line_color="blue",
+            y=m_p1_opt, line_dash="dash", line_color="#1D4ED8",
             annotation_text=f"Óptimo = USD {m_p1_opt:.1f}", annotation_position="top right"
         )
 
@@ -280,11 +306,22 @@ if verificar_autenticacion():
             template="plotly_white",
             paper_bgcolor='white',
             plot_bgcolor='white',
-            xaxis_title="Días del Período / Mes (t)",
-            yaxis_title="Saldos Reales Retenidos (M/P)",
-            xaxis=dict(range=[0, 30], tickmode='linear', tick0=0, dtick=5, gridcolor='#F0F0F0'),
-            yaxis=dict(range=[0, max(Q0 / N0_opt, Q1 / N1_opt) * 1.25], gridcolor='#F0F0F0'),
-            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.9)"),
+            font=dict(color='#111827', size=12),
+            xaxis=dict(
+                title=dict(text="Días del Período / Mes (t)", font=dict(color='#111827', size=13)),
+                tickfont=dict(color='#111827', size=11),
+                range=[0, 30], tickmode='linear', tick0=0, dtick=5,
+                showline=True, linecolor='#374151', linewidth=1.5,
+                gridcolor='#E5E7EB'
+            ),
+            yaxis=dict(
+                title=dict(text="Saldos Reales Retenidos (M/P)", font=dict(color='#111827', size=13)),
+                tickfont=dict(color='#111827', size=11),
+                range=[0, max(Q0 / N0_opt, Q1 / N1_opt) * 1.25],
+                showline=True, linecolor='#374151', linewidth=1.5,
+                gridcolor='#E5E7EB'
+            ),
+            legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.95)", font=dict(color='#111827')),
             margin=dict(l=20, r=20, t=20, b=20), height=450
         )
         st.plotly_chart(fig_saw, use_container_width=True)
