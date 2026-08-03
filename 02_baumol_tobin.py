@@ -79,19 +79,22 @@ if verificar_autenticacion():
     Este modelo analiza el dilema de optimización microeconómica entre la liquidez monetaria y el rendimiento de los activos financieros.*
     """)
 
-    # --- BARRA LATERAL: PARAMETRIZACIÓN (Sachs & Larraín) ---
-    st.sidebar.header("🛠️ Variables Macroeconómicas Base")
+    # --- BARRA LATERAL: PARAMETRIZACIÓN (REORDENADA) ---
+    st.sidebar.header("🛠️ Configuración de Parámetros")
     P = st.sidebar.slider("Nivel General de Precios (P)", 0.5, 5.0, 1.0, 0.1)
 
-    st.sidebar.subheader("⚙️ Estado Inicial (Línea Base / Punteado)")
-    Q0 = st.sidebar.slider("Ingreso Real Inicial (Q₀)", 100.0, 5000.0, 1000.0, 100.0)
-    b0 = st.sidebar.slider("Costo Real por Transacción Inicial (b₀)", 0.5, 20.0, 2.0, 0.5)
-    i0 = st.sidebar.slider("Tasa de Interés Nominal Inicial (i₀)", 0.01, 0.50, 0.10, 0.01, format="%.2f")
-
-    st.sidebar.subheader("⚡ Shock de Mercado / Innovación (Color Sólido)")
+    # 1. CONTROLES DE SHOCK (ARRIBA)
+    st.sidebar.subheader("⚡ Shocks / Modificaciones")
     Q1 = st.sidebar.slider("Ingreso Real Post-Shock (Q₁)", 100.0, 5000.0, 1000.0, 100.0)
     b1 = st.sidebar.slider("Costo Real Post-Shock (b₁)", 0.5, 20.0, 2.0, 0.5)
     i1 = st.sidebar.slider("Tasa de Interés Post-Shock (i₁)", 0.01, 0.50, 0.10, 0.01, format="%.2f")
+
+    # 2. CONTROLES DE SITUACIÓN INICIAL (ABAJO)
+    st.sidebar.subheader("⚙️ Estado Inicial de la Economía")
+    st.sidebar.caption("(Solo modificar de ser necesario cambiar el estado inicial de la economía)")
+    Q0 = st.sidebar.slider("Ingreso Real Inicial (Q₀)", 100.0, 5000.0, 1000.0, 100.0)
+    b0 = st.sidebar.slider("Costo Real por Transacción Inicial (b₀)", 0.5, 20.0, 2.0, 0.5)
+    i0 = st.sidebar.slider("Tasa de Interés Nominal Inicial (i₀)", 0.01, 0.50, 0.10, 0.01, format="%.2f")
 
     # --- CÁLCULOS MATEMÁTICOS DE OPTIMIZACIÓN ---
     # Estado Inicial (0)
@@ -119,8 +122,8 @@ if verificar_autenticacion():
     )
     m_col2.metric(
         label="Saldos Reales Medios (M/P)*",
-        value=f"${m_p1_opt:.2f}",
-        delta=f"${m_p1_opt - m_p0_opt:.2f}" if hay_shock else None
+        value=f"US$ {m_p1_opt:.2f}",
+        delta=f"US$ {m_p1_opt - m_p0_opt:.2f}" if hay_shock else None
     )
     m_col3.metric(
         label="Días entre Retiros",
@@ -129,15 +132,15 @@ if verificar_autenticacion():
     )
     m_col4.metric(
         label="Costo Total Mínimo (CT*)",
-        value=f"${CT1_opt:.2f}",
-        delta=f"${CT1_opt - CT0_opt:.2f}" if hay_shock else None
+        value=f"US$ {CT1_opt:.2f}",
+        delta=f"US$ {CT1_opt - CT0_opt:.2f}" if hay_shock else None
     )
 
     # --- CUERPO PRINCIPAL: GRÁFICOS EN PARALELO ---
     col_g1, col_g2 = st.columns(2)
 
     # -------------------------------------------------------------------------
-    # COLUMNA 1: MINIMIZACIÓN DE COSTOS (ESTÁTICA DINÁMICA CON COMPONENTES)
+    # COLUMNA 1: MINIMIZACIÓN DE COSTOS (NEGRO SÓLIDO INICIAL VS COLOR SHOCK)
     # -------------------------------------------------------------------------
     with col_g1:
         st.write("**Minimización de Costos Totales de Manejo de Efectivo**")
@@ -147,7 +150,7 @@ if verificar_autenticacion():
         
         fig_costos = go.Figure()
 
-        # DIBUJO DE CURVAS INICIALES (LÍNEAS BASE EN PUNTEADO SI HAY SHOCK)
+        # CURVAS INICIALES: NEGRO SÓLIDO (Si hay shock)
         if hay_shock:
             costo_trans0 = b0 * N_grid
             costo_oport0 = i0 * (Q0 / (2 * N_grid))
@@ -155,15 +158,15 @@ if verificar_autenticacion():
 
             fig_costos.add_trace(go.Scatter(
                 x=N_grid, y=costo_total0, name="CT₀ (Costo Total Inicial)",
-                line=dict(color='gray', width=2, dash='dash')
+                line=dict(color='black', width=3)
             ))
             fig_costos.add_trace(go.Scatter(
                 x=N_grid, y=costo_trans0, name="Transacción b₀·N (Inicial)",
-                line=dict(color='orange', width=1.5, dash='dash')
+                line=dict(color='#444444', width=1.5)
             ))
             fig_costos.add_trace(go.Scatter(
                 x=N_grid, y=costo_oport0, name="Oportunidad i₀·Q₀/2N (Inicial)",
-                line=dict(color='green', width=1.5, dash='dash')
+                line=dict(color='#666666', width=1.5)
             ))
             fig_costos.add_trace(go.Scatter(
                 x=[N0_opt], y=[CT0_opt], mode='markers+text',
@@ -171,14 +174,14 @@ if verificar_autenticacion():
                 marker=dict(color='black', size=9, symbol='square'), name="Óptimo N₀*"
             ))
 
-        # DIBUJO DE CURVAS POST-SHOCK (SÓLIDAS / DESTACADAS EN COLOR)
+        # CURVAS POST-SHOCK: COLOR SÓLIDO
         costo_trans1 = b1 * N_grid
         costo_oport1 = i1 * (Q1 / (2 * N_grid))
         costo_total1 = costo_trans1 + costo_oport1
 
         fig_costos.add_trace(go.Scatter(
             x=N_grid, y=costo_total1, name="CT₁ (Costo Total Post-Shock)" if hay_shock else "CT(N) Costo Total",
-            line=dict(color='blue', width=3)
+            line=dict(color='blue', width=3.5)
         ))
         fig_costos.add_trace(go.Scatter(
             x=N_grid, y=costo_trans1, name="Transacción b₁·N (Post-Shock)" if hay_shock else "Costo Transaccional (b·N)",
@@ -196,7 +199,7 @@ if verificar_autenticacion():
 
         fig_costos.add_vline(x=N1_opt, line_dash="dot", line_color="blue" if hay_shock else "gray")
         if hay_shock:
-            fig_costos.add_vline(x=N0_opt, line_dash="dot", line_color="gray")
+            fig_costos.add_vline(x=N0_opt, line_dash="dot", line_color="black")
 
         fig_costos.update_layout(
             xaxis_title="Número de Transacciones / Viajes (N)",
@@ -216,17 +219,19 @@ if verificar_autenticacion():
         
         fig_saw = go.Figure()
 
+        # Diente de Sierra Inicial en Negro Sólido
         if hay_shock:
             t_dias0, m_p_dias0 = generar_diente_sierra(Q0, N0_opt, dias=30)
             fig_saw.add_trace(go.Scatter(
                 x=t_dias0, y=m_p_dias0, name="Saldo Inicial (M/P)₀",
-                line=dict(color='gray', width=1.5, dash='dash')
+                line=dict(color='black', width=2)
             ))
             fig_saw.add_hline(
-                y=m_p0_opt, line_dash="dot", line_color="gray",
-                annotation_text=f"Promedio Base = ${m_p0_opt:.1f}", annotation_position="bottom left"
+                y=m_p0_opt, line_dash="dot", line_color="black",
+                annotation_text=f"Promedio Base = US$ {m_p0_opt:.1f}", annotation_position="bottom left"
             )
 
+        # Diente de Sierra Post-Shock en Color
         t_dias1, m_p_dias1 = generar_diente_sierra(Q1, N1_opt, dias=30)
         fig_saw.add_trace(go.Scatter(
             x=t_dias1, y=m_p_dias1, name="Saldo Post-Shock (M/P)₁" if hay_shock else "Saldo Monetario Real (M/P)ₜ",
@@ -235,7 +240,7 @@ if verificar_autenticacion():
 
         fig_saw.add_hline(
             y=m_p1_opt, line_dash="dash", line_color="blue",
-            annotation_text=f"Promedio Óptimo = ${m_p1_opt:.1f}", annotation_position="top right"
+            annotation_text=f"Promedio Óptimo = US$ {m_p1_opt:.1f}", annotation_position="top right"
         )
 
         fig_saw.update_layout(
@@ -248,7 +253,31 @@ if verificar_autenticacion():
         )
         st.plotly_chart(fig_saw, use_container_width=True)
 
-    # --- RECUADRO PEDAGÓGICO DE SÍNTESIS (SIN CONFLITOS DE LATEX) ---
+    # --- LEYENDA EXPLICATIVA DINÁMICA DE SHOCKS (ESTILO MÓDULO 1) ---
+    if hay_shock:
+        explicacion_dinamica = "### ⚡ Diagnóstico Dinámico del Shock Aplicado:\n"
+        
+        if i1 != i0:
+            if i1 > i0:
+                explicacion_dinamica += f"* **Alza en la Tasa de Interés ($i_0 = {i0:.2f} \\to i_1 = {i1:.2f}$):** Eleva el costo de oportunidad de mantener dinero líquido. La curva verde de costo de oportunidad gira en sentido antihorario hacia arriba. El agente incrementa los viajes al banco ($N^*: {N0_opt:.2f} \\to {N1_opt:.2f}$) y reduce sus saldos monetarios reales medios ($(M/P)^*: \\text{{US\\$}} {m_p0_opt:.1f} \\to \\text{{US\\$}} {m_p1_opt:.1f}$).\n"
+            else:
+                explicacion_dinamica += f"* **Caída en la Tasa de Interés ($i_0 = {i0:.2f} \\to i_1 = {i1:.2f}$):** Abarata la tenencia de efectivo. La curva verde gira en sentido horario hacia abajo. Los viajes al banco disminuyen ($N^*: {N0_opt:.2f} \\to {N1_opt:.2f}$) y el saldo promedio retenido aumenta ($(M/P)^*: \\text{{US\\$}} {m_p0_opt:.1f} \\to \\text{{US\\$}} {m_p1_opt:.1f}$).\n"
+        
+        if b1 != b0:
+            if b1 < b0:
+                explicacion_dinamica += f"* **Reducción del Costo Transaccional ($b_0 = {b0:.2f} \\to b_1 = {b1:.2f}$):** Abarata acudir al banco o transferir fondos. La recta de costo transaccional (naranja) se vuelve más plana. Aumenta la frecuencia óptima de retiros ($N^*: {N0_opt:.2f} \\to {N1_opt:.2f}$) y cae la demanda media de efectivo ($(M/P)^*: \\text{{US\\$}} {m_p0_opt:.1f} \\to \\text{{US\\$}} {m_p1_opt:.1f}$).\n"
+            else:
+                explicacion_dinamica += f"* **Aumento del Costo Transaccional ($b_0 = {b0:.2f} \\to b_1 = {b1:.2f}$):** Encarece las transacciones. La recta naranja gira volviéndose más empinada. El agente realiza menos viajes ($N^*: {N0_opt:.2f} \\to {N1_opt:.2f}$) y acumula más efectivo por viaje ($(M/P)^*: \\text{{US\\$}} {m_p0_opt:.1f} \\to \\text{{US\\$}} {m_p1_opt:.1f}$).\n"
+
+        if Q1 != Q0:
+            if Q1 > Q0:
+                explicacion_dinamica += f"* **Expansión del Ingreso Real ($Q_0 = {Q0:.0f} \\to Q_1 = {Q1:.0f}$):** Incrementa el volumen de transacciones del hogar. La curva verde de costo de oportunidad se desplaza hacia arriba. Eleva tanto el número óptimo de retiros ($N^*: {N0_opt:.2f} \\to {N1_opt:.2f}$) como la demanda de dinero ($(M/P)^*: \\text{{US\\$}} {m_p0_opt:.1f} \\to \\text{{US\\$}} {m_p1_opt:.1f}$), reflejando economías de escala.\n"
+            else:
+                explicacion_dinamica += f"* **Contracción del Ingreso Real ($Q_0 = {Q0:.0f} \\to Q_1 = {Q1:.0f}$):** Disminuye la escala transaccional. La curva verde se desplaza hacia abajo, reduciendo la frecuencia de retiros ($N^*: {N0_opt:.2f} \\to {N1_opt:.2f}$) y la demanda media de liquidez ($(M/P)^*: \\text{{US\\$}} {m_p0_opt:.1f} \\to \\text{{US\\$}} {m_p1_opt:.1f}$).\n"
+        
+        st.success(explicacion_dinamica)
+
+    # --- RECUADRO PEDAGÓGICO GENERAL DE SÍNTESIS ---
     costo_trans_val = b1 * N1_opt
     costo_oport_val = i1 * (Q1 / (2 * N1_opt))
 
@@ -257,9 +286,9 @@ if verificar_autenticacion():
     
     El modelo de **Baumol-Tobin** demuestra que la demanda real de dinero no es un mero porcentaje del ingreso, sino el resultado de un proceso de **optimización de costos**:
     
-    1. **Igualdad en el Óptimo:** En el punto de equilibrio mínimo $N^* = {N1_opt:.2f}$, el costo transaccional ($b \\cdot N$) de **US$ {costo_trans_val:.2f}** es exactamente igual al costo de oportunidad ($i \\cdot \\frac{{Q}}{{2N}}$) de **US$ {costo_oport_val:.2f}**.
-    2. **Economías de Escala en la Liquidez:** La elasticidad ingreso es $\\epsilon_Q = 0.5$. Si el ingreso real ($Q$) se duplica, la demanda óptima de dinero $(\\frac{{M}}{{P}})^*$ no se duplica; solo aumenta en un factor de $\\sqrt{{2}} \\approx 41.4\\%$. Los agentes con mayores ingresos administran su liquidez de forma más eficiente.
-    3. **Sensibilidad a la Innovación Financiera ($b$) y la Tasa ($i$):** 
-       * Un aumento en la tasa de interés ($i$) o en el ingreso ($Q$) desplaza la curva de costo de oportunidad ($i \\cdot \\frac{{Q}}{{2N}}$) hacia arriba (giro antihorario), incrementando el número óptimo de viajes ($N^*$) y reduciendo la demanda de dinero.
-       * Una reducción en el costo de transacción ($b$) debido a la bancarización o digitalización vuelve la recta de costo transaccional ($b \\cdot N$) más plana, reduciendo la tenencia promedio de dinero en efectivo $(\\frac{{M}}{{P}})^*$.
+    1. **Igualdad en el Óptimo:** En el punto de equilibrio mínimo $N^* = {N1_opt:.2f}$, el costo transaccional $b \\cdot N$ (US$ {costo_trans_val:.2f}) es exactamente igual al costo de oportunidad $i \\cdot \\frac{{Q}}{{2N}}$ (US$ {costo_oport_val:.2f}).
+    2. **Economías de Escala en la Liquidez:** La elasticidad ingreso es $\\epsilon_Q = 0.5$. Si el ingreso real ($Q$) se duplica, la demanda óptima de dinero $(M/P)^*$ no se duplica; solo aumenta en un factor de $\\sqrt{{2}} \\approx 41.4\\%$. Los agentes con mayores ingresos administran su liquidez de forma más eficiente.
+    3. **Sensibilidad a la Innovación Financiera ($b$), Tasa ($i$) e Ingreso ($Q$):**
+       * Un aumento en la tasa de interés ($i$) o en el ingreso ($Q$) desplaza la curva de costo de oportunidad hacia arriba (giro antihorario), incrementando el número óptimo de viajes ($N^*$) y reduciendo la demanda de dinero.
+       * Una reducción en el costo de transacción ($b$) debido a la bancarización o digitalización vuelve la recta de costo transaccional más plana, reduciendo la tenencia promedio de dinero en efectivo $(M/P)^*$.
     """)
