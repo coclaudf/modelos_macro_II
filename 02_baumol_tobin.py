@@ -286,8 +286,8 @@ if verificar_autenticacion():
     
     El modelo de **Baumol-Tobin** demuestra que la demanda real de dinero no es un mero porcentaje del ingreso, sino el resultado de un proceso de **optimización de costos**:
     
-    1. **Igualdad en el Óptimo:** En el punto de equilibrio mínimo $N^* = {N1_opt:.2f}$, el costo transaccional $b \\cdot N$ (US$ {costo_trans_val:.2f}) es exactamente igual al costo de oportunidad $i \\cdot \\frac{{Q}}{{2N}}$ (US$ {costo_oport_val:.2f}).
-    2. **Economías de Escala en la Liquidez:** La elasticidad ingreso es $\\epsilon_Q = 0.5$. Si el ingreso real ($Q$) se duplica, la demanda óptima de dinero $(M/P)^*$ no se duplica; solo aumenta en un factor de $\\sqrt{{2}} \\approx 41.4\\%$. Los agentes con mayores ingresos administran su liquidez de forma más eficiente.
+    1. **Igualdad en el Óptimo:** En el punto de equilibrio mínimo $N^* = {N1_opt:.2f}$, el costo transaccional $b \cdot N$ (USD {costo_trans_val:.2f}) es exactamente igual al costo de oportunidad $i \cdot \\frac{{Q}}{{2N}}$ (USD {costo_oport_val:.2f}).
+    2. **Economías de Escala en la Liquidez:** La elasticidad ingreso es $\\epsilon_Q = 0.5$. Si el ingreso real ($Q$) se duplica, la demanda óptima de dinero $(M/P)^*$ no se duplica; solo aumenta en un factor de $\\sqrt{{2}} \\approx 41.4\%$. Los agentes con mayores ingresos administran su liquidez de forma más eficiente.
     3. **Sensibilidad a la Innovación Financiera ($b$), Tasa ($i$) e Ingreso ($Q$):**
        * Un aumento en la tasa de interés ($i$) o en el ingreso ($Q$) desplaza la curva de costo de oportunidad hacia arriba (giro antihorario), incrementando el número óptimo de viajes ($N^*$) y reduciendo la demanda de dinero.
        * Una reducción en el costo de transacción ($b$) debido a la bancarización o digitalización vuelve la recta de costo transaccional más plana, reduciendo la tenencia promedio de dinero en efectivo $(M/P)^*$.
