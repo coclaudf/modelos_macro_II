@@ -253,31 +253,31 @@ if verificar_autenticacion():
         )
         st.plotly_chart(fig_saw, use_container_width=True)
 
-    # --- LEYENDA EXPLICATIVA DINÁMICA DE SHOCKS (SINTAXIS LIMPIA DE LATEX) ---
+    # --- LEYENDA EXPLICATIVA DINÁMICA DE SHOCKS (SINTAXIS ESCAPADA DE LATEX) ---
     if hay_shock:
         explicacion_dinamica = "### ⚡ Diagnóstico Dinámico del Shock Aplicado:\n"
         
         if i1 != i0:
             if i1 > i0:
-                explicacion_dinamica += f"* **Alza en la Tasa de Interés ($i_0 = {i0:.2f} \to i_1 = {i1:.2f}$):** Eleva el costo de oportunidad de mantener dinero líquido. La curva verde de costo de oportunidad gira en sentido antihorario hacia arriba. El agente incrementa los viajes al banco ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y reduce sus saldos monetarios reales medios ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
+                explicacion_dinamica += f"* **Alza en la Tasa de Interés ($i_0 = {i0:.2f} \\to i_1 = {i1:.2f}$):** Eleva el costo de oportunidad de mantener dinero líquido. La curva verde de costo de oportunidad gira en sentido antihorario hacia arriba. El agente incrementa los viajes al banco ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y reduce sus saldos monetarios reales medios ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
             else:
-                explicacion_dinamica += f"* **Caída en la Tasa de Interés ($i_0 = {i0:.2f} \to i_1 = {i1:.2f}$):** Abarata la tenencia de efectivo. La curva verde gira en sentido horario hacia abajo. Los viajes al banco disminuyen ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y el saldo promedio retenido aumenta ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
+                explicacion_dinamica += f"* **Caída en la Tasa de Interés ($i_0 = {i0:.2f} \\to i_1 = {i1:.2f}$):** Abarata la tenencia de efectivo. La curva verde gira en sentido horario hacia abajo. Los viajes al banco disminuyen ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y el saldo promedio retenido aumenta ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
         
         if b1 != b0:
             if b1 < b0:
-                explicacion_dinamica += f"* **Reducción del Costo Transaccional ($b_0 = {b0:.2f} \to b_1 = {b1:.2f}$):** Abarata acudir al banco o transferir fondos. La recta de costo transaccional (naranja) se vuelve más plana. Aumenta la frecuencia óptima de retiros ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y cae la demanda media de efectivo ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
+                explicacion_dinamica += f"* **Reducción del Costo Transaccional ($b_0 = {b0:.2f} \\to b_1 = {b1:.2f}$):** Abarata acudir al banco o transferir fondos. La recta de costo transaccional (naranja) se vuelve más plana. Aumenta la frecuencia óptima de retiros ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y cae la demanda media de efectivo ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
             else:
-                explicacion_dinamica += f"* **Aumento del Costo Transaccional ($b_0 = {b0:.2f} \to b_1 = {b1:.2f}$):** Encarece las transacciones. La recta naranja gira volviéndose más empinada. El agente realiza menos viajes ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y acumula más efectivo por viaje ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
+                explicacion_dinamica += f"* **Aumento del Costo Transaccional ($b_0 = {b0:.2f} \\to b_1 = {b1:.2f}$):** Encarece las transacciones. La recta naranja gira volviéndose más empinada. El agente realiza menos viajes ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y acumula más efectivo por viaje ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
 
         if Q1 != Q0:
             if Q1 > Q0:
-                explicacion_dinamica += f"* **Expansión del Ingreso Real ($Q_0 = {Q0:.0f} \to Q_1 = {Q1:.0f}$):** Incrementa el volumen de transacciones del hogar. La curva verde de costo de oportunidad se desplaza hacia arriba. Eleva tanto el número óptimo de retiros ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) como la demanda de dinero ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}), reflejando economías de escala.\n"
+                explicacion_dinamica += f"* **Expansión del Ingreso Real ($Q_0 = {Q0:.0f} \\to Q_1 = {Q1:.0f}$):** Incrementa el volumen de transacciones del hogar. La curva verde de costo de oportunidad se desplaza hacia arriba. Eleva tanto el número óptimo de retiros ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) como la demanda de dinero ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}), reflejando economías de escala.\n"
             else:
-                explicacion_dinamica += f"* **Contracción del Ingreso Real ($Q_0 = {Q0:.0f} \to Q_1 = {Q1:.0f}$):** Disminuye la escala transaccional. La curva verde se desplaza hacia abajo, reduciendo la frecuencia de retiros ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y la demanda media de liquidez ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
+                explicacion_dinamica += f"* **Contracción del Ingreso Real ($Q_0 = {Q0:.0f} \\to Q_1 = {Q1:.0f}$):** Disminuye la escala transaccional. La curva verde se desplaza hacia abajo, reduciendo la frecuencia de retiros ($N^*$: {N0_opt:.2f} a {N1_opt:.2f}) y la demanda media de liquidez ($(M/P)^*$: USD {m_p0_opt:.1f} a USD {m_p1_opt:.1f}).\n"
         
         st.success(explicacion_dinamica)
 
-    # --- RECUADRO PEDAGÓGICO GENERAL DE SÍNTESIS ---
+    # --- RECUADRO PEDAGÓGICO GENERAL DE SÍNTESIS (SINTAXIS ESCAPADA DE LATEX) ---
     costo_trans_val = b1 * N1_opt
     costo_oport_val = i1 * (Q1 / (2 * N1_opt))
 
@@ -286,8 +286,8 @@ if verificar_autenticacion():
     
     El modelo de **Baumol-Tobin** demuestra que la demanda real de dinero no es un mero porcentaje del ingreso, sino el resultado de un proceso de **optimización de costos**:
     
-    1. **Igualdad en el Óptimo:** En el punto de equilibrio mínimo $N^* = {N1_opt:.2f}$, el costo transaccional $b \cdot N$ (USD {costo_trans_val:.2f}) es exactamente igual al costo de oportunidad $i \cdot \frac{{Q}}{{2N}}$ (USD {costo_oport_val:.2f}).
-    2. **Economías de Escala en la Liquidez:** La elasticidad ingreso es $\epsilon_Q = 0.5$. Si el ingreso real ($Q$) se duplica, la demanda óptima de dinero $(M/P)^*$ no se duplica; solo aumenta en un factor de $\sqrt{{2}} \approx 41.4\%$. Los agentes con mayores ingresos administran su liquidez de forma más eficiente.
+    1. **Igualdad en el Óptimo:** En el punto de equilibrio mínimo $N^* = {N1_opt:.2f}$, el costo transaccional $b \\cdot N$ (USD {costo_trans_val:.2f}) es exactamente igual al costo de oportunidad $i \\cdot \\frac{{Q}}{{2N}}$ (USD {costo_oport_val:.2f}).
+    2. **Economías de Escala en la Liquidez:** La elasticidad ingreso es $\\epsilon_Q = 0.5$. Si el ingreso real ($Q$) se duplica, la demanda óptima de dinero $(M/P)^*$ no se duplica; solo aumenta en un factor de $\\sqrt{{2}} \\approx 41.4\\%$. Los agentes con mayores ingresos administran su liquidez de forma más eficiente.
     3. **Sensibilidad a la Innovación Financiera ($b$), Tasa ($i$) e Ingreso ($Q$):**
        * Un aumento en la tasa de interés ($i$) o en el ingreso ($Q$) desplaza la curva de costo de oportunidad hacia arriba (giro antihorario), incrementando el número óptimo de viajes ($N^*$) y reduciendo la demanda de dinero.
        * Una reducción en el costo de transacción ($b$) debido a la bancarización o digitalización vuelve la recta de costo transaccional más plana, reduciendo la tenencia promedio de dinero en efectivo $(M/P)^*$.
