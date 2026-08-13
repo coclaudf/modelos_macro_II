@@ -133,8 +133,11 @@ if verificar_autenticacion():
         st.sidebar.subheader("⚡ Shock de Tasa de Interés")
         i_inicial = st.sidebar.slider("Tasa de Interés Inicial (i₀)", 0.0, 1.0, 0.10, 0.05, format="%.2f")
         i_final = st.sidebar.slider("Tasa de Interés Post-Shock (i₁)", 0.0, 1.0, 0.10, 0.05, format="%.2f")
+        
+        st.sidebar.subheader("🔍 Visualización")
+        zoom_activado = st.sidebar.checkbox("Activar Lupa (Enfocar en la zona de equilibrio)")
 
-        # Cálculos económicos óptimos (U = ln(C1) + beta * ln(C2))
+        # Cálculos económicos óptimos
         omega_inicial = y1 + y2 / (1 + i_inicial)
         omega_final = y1 + y2 / (1 + i_final)
         
@@ -163,11 +166,25 @@ if verificar_autenticacion():
         with col1:
             st.write("**Espacio de Asignación Intertemporal (Estática)**")
             
-            # --- AJUSTE DE ESCALA 1: Ampliación para que la curva baje hacia el centro ---
-            rango_max_x = max(omega_inicial, omega_final, omega_hicks) * 1.3
-            rango_max_y = max(omega_inicial * (1+i_inicial), omega_final * (1+i_final), omega_hicks * (1+i_final)) * 1.3
+            # Cálculo de escalas normales vs con Lupa
+            max_omega_x = max(omega_inicial, omega_final, omega_hicks)
+            max_omega_y = max(omega_inicial * (1+i_inicial), omega_final * (1+i_final), omega_hicks * (1+i_final))
             
-            c1_vec = np.linspace(0.1, rango_max_x, 200)
+            if zoom_activado:
+                # Recorta el gráfico alrededor de los puntos clave
+                min_x = min(c1_inicial, c1_final, c1_hicks, y1) * 0.85
+                max_x = max(c1_inicial, c1_final, c1_hicks, y1) * 1.15
+                min_y = min(c2_inicial, c2_final, c2_hicks, y2) * 0.85
+                max_y = max(c2_inicial, c2_final, c2_hicks, y2) * 1.15
+                rango_x = [min_x, max_x]
+                rango_y = [min_y, max_y]
+            else:
+                # Muestra el gráfico completo hasta los ejes, con menor aire
+                rango_x = [0, max_omega_x * 1.1]
+                rango_y = [0, max_omega_y * 1.1]
+            
+            # Generamos las curvas utilizando todo el dominio posible para evitar cortes
+            c1_vec = np.linspace(0.1, max_omega_x * 1.2, 300)
             
             fig_static = go.Figure()
             
@@ -177,12 +194,12 @@ if verificar_autenticacion():
             fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_hicks - c1_vec) * (1 + i_final), name="RP Hicks (Teórica)", line=dict(color='orange', width=2, dash='dot')))
             
             # --- 2. CURVAS DE INDIFERENCIA (SIEMPRE LLENAS) ---
-            # Limpiamos los arrays de NaNs para que Plotly no grafique líneas al infinito
             u0_y = np.exp((u_inicial - np.log(c1_vec)) / beta)
             u1_y = np.exp((u_final - np.log(c1_vec)) / beta)
             
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u0_y <= rango_max_y*1.5, u0_y, np.nan), name="U₀ (Bienestar Inicial)", line=dict(color='green', width=2)))
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u1_y <= rango_max_y*1.5, u1_y, np.nan), name="U₁ (Bienestar Final)", line=dict(color='blue', width=2)))
+            # Filtramos para no graficar al infinito
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u0_y <= max_omega_y*1.5, u0_y, np.nan), name="U₀ (Bienestar Inicial)", line=dict(color='green', width=2)))
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u1_y <= max_omega_y*1.5, u1_y, np.nan), name="U₁ (Bienestar Final)", line=dict(color='blue', width=2)))
             
             # --- 3. PUNTOS CLAVE Y DOTACIÓN ---
             fig_static.add_trace(go.Scatter(x=[c1_inicial], y=[c2_inicial], mode='markers+text', text=['A (Inicial)'], textposition='top right', marker=dict(color='green', size=10), showlegend=False))
@@ -193,8 +210,8 @@ if verificar_autenticacion():
             fig_static.update_layout(
                 template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 xaxis_title="Consumo Presente (C₁)", yaxis_title="Consumo Futuro (C₂)",
-                xaxis=dict(range=[0, rango_max_x], showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'), 
-                yaxis=dict(range=[0, rango_max_y], showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'),
+                xaxis=dict(range=rango_x, showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'), 
+                yaxis=dict(range=rango_y, showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'),
                 legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99), margin=dict(l=20, r=20, t=20, b=20), height=450
             )
             st.plotly_chart(fig_static, use_container_width=True)
@@ -250,6 +267,9 @@ if verificar_autenticacion():
         
         st.sidebar.subheader("🛡️ Imperfecciones de Mercado")
         restriccion_liquidez = st.sidebar.checkbox("Activar Restricción de Liquidez Estricta (No Endeudamiento)")
+        
+        st.sidebar.subheader("🔍 Visualización")
+        zoom_activado_m2 = st.sidebar.checkbox("Activar Lupa (Enfocar en la zona de equilibrio)")
 
         # --- CONSTRUCCIÓN DE VECTORES PARA LA DINÁMICA DE LARGO PLAZO ---
         t_vec = np.arange(0, horizonte_t + 1)
@@ -313,11 +333,21 @@ if verificar_autenticacion():
         with col_g1:
             st.write("**Desplazamiento Analítico de Rectas e Isocuantas (t=1)**")
             
-            # --- AJUSTE DE ESCALA 2: Para que no queden pegadas arriba ---
-            rango_max_x2 = max(omega_2d_inicial, omega_2d_final) * 1.2
-            rango_max_y2 = max(omega_2d_inicial, omega_2d_final) * 1.2
+            max_omega_2d = max(omega_2d_inicial, omega_2d_final)
             
-            c1_grid = np.linspace(0.1, rango_max_x2, 300)
+            if zoom_activado_m2:
+                # Recorta el gráfico al cuadrante de acción
+                min_x2 = min(c1_inicial_plot, c1_libre_plot, c1_restric_plot, y1_inicial, y1_final) * 0.85
+                max_x2 = max(c1_inicial_plot, c1_libre_plot, c1_restric_plot, y1_inicial, y1_final) * 1.15
+                min_y2 = min(cfut_inicial_plot, cfut_libre_plot, cfut_restric_plot, y_fut_inicial, y_fut_final) * 0.85
+                max_y2 = max(cfut_inicial_plot, cfut_libre_plot, cfut_restric_plot, y_fut_inicial, y_fut_final) * 1.15
+                rango_x2 = [min_x2, max_x2]
+                rango_y2 = [min_y2, max_y2]
+            else:
+                rango_x2 = [0, max_omega_2d * 1.1]
+                rango_y2 = [0, max_omega_2d * 1.1]
+            
+            c1_grid = np.linspace(0.1, max_omega_2d * 1.2, 300)
             fig_macro_static = go.Figure()
             
             # --- 1. RESTRICCIONES PRESUPUESTARIAS (SIEMPRE PUNTEADAS/RAYADAS) ---
@@ -333,11 +363,11 @@ if verificar_autenticacion():
             # --- 2. ISOCUANTAS (SIEMPRE LLENAS) ---
             u_init_2d = np.log(c1_inicial_plot) + gamma_futuro * np.log(cfut_inicial_plot / gamma_futuro)
             indif_init_2d = gamma_futuro * np.exp((u_init_2d - np.log(c1_grid)) / gamma_futuro)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_init_2d <= rango_max_y2*1.5, indif_init_2d, np.nan), name="U₀ (EE Inicial)", line=dict(color='green', width=2)))
+            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_init_2d <= max_omega_2d*1.5, indif_init_2d, np.nan), name="U₀ (EE Inicial)", line=dict(color='green', width=2)))
             
             u_libre_2d = np.log(c1_libre_plot) + gamma_futuro * np.log(cfut_libre_plot / gamma_futuro)
             indif_libre_2d = gamma_futuro * np.exp((u_libre_2d - np.log(c1_grid)) / gamma_futuro)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_libre_2d <= rango_max_y2*1.5, indif_libre_2d, np.nan), name="U₁ (Post-Shock Libre)", line=dict(color='blue', width=2)))
+            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_libre_2d <= max_omega_2d*1.5, indif_libre_2d, np.nan), name="U₁ (Post-Shock Libre)", line=dict(color='blue', width=2)))
 
             # --- 3. PUNTOS Y DOTACIONES ---
             fig_macro_static.add_trace(go.Scatter(x=[y1_inicial], y=[y_fut_inicial], mode='markers+text', text=['X₀ (Dotación EE)'], textposition='bottom left', marker=dict(color='black', symbol='square', size=8), name="Dotación Inicial"))
@@ -352,8 +382,8 @@ if verificar_autenticacion():
             fig_macro_static.update_layout(
                 template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 xaxis_title="Consumo Presente Actual (C₁)", yaxis_title="VP del Consumo Futuro Acumulado (C_Futuro)",
-                xaxis=dict(range=[0, rango_max_x2], showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'),
-                yaxis=dict(range=[0, rango_max_y2], showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'),
+                xaxis=dict(range=rango_x2, showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'),
+                yaxis=dict(range=rango_y2, showline=True, linecolor='#374151', linewidth=1.5, gridcolor='#E5E7EB'),
                 legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.7)"), margin=dict(l=20, r=20, t=20, b=20), height=450
             )
             st.plotly_chart(fig_macro_static, use_container_width=True)
@@ -407,7 +437,6 @@ if verificar_autenticacion():
         else:  # Shocks anticipados
             st.write("""
             * **El Rol de las Expectativas Racionales (Previsión Perfecta):** Note que en el período $t=1$, el ingreso físico aún no se ha modificado (el eje X de la dotación no cambia). Sin embargo, como el consumidor anticipa el cambio futuro, la dotación se desplaza verticalmente en el gráfico izquierdo. La restricción presupuestaria se expande por "efecto riqueza" desde hoy. El consumidor libre salta de inmediato a un consumo más alto en el período 1.
-            * **La Dinámica frente a Restricciones de Liquidez:** 
-              * Si el shock futuro es *positivo* y se activa la restricción de liquidez, la recta de balance sufre un quiebre estricto (kink) vertical en el nivel de ingreso corriente actual. El consumidor no puede endeudarse para adelantar consumo. Verás en el gráfico analítico que queda atrapado en una solución de esquina (**Punto B**) y en la trayectoria el consumo no se moverá hasta que físicamente llegue el período $t=4$.
-              * Si el shock futuro es *negativo*, el agente necesita ahorrar de forma preventiva. Dado que el sistema financiero permite resguardar valor sin inconvenientes, el consumidor restringido replica con total exactitud al consumidor libre, contrayendo su nivel de consumo desde el período 1.
+            * **La Dinámica frente a Restricciones de Liquidez:** * Si el shock futuro es *positivo* y se activa la restricción de liquidez, la recta de balance sufre un quiebre estricto (kink) vertical en el nivel de ingreso corriente actual. El consumidor no puede endeudarse para adelantar consumo. Verás en el gráfico analítico que queda atrapado en una solución de esquina (**Punto B**) y en la trayectoria el consumo no se moverá hasta que físicamente llegue el período $t=4$.
+                * Si el shock futuro es *negativo*, el agente necesita ahorrar de forma preventiva. Dado que el sistema financiero permite resguardar valor sin inconvenientes, el consumidor restringido replica con total exactitud al consumidor libre, contrayendo su nivel de consumo desde el período 1.
             """)
