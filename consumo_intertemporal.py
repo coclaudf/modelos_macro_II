@@ -114,7 +114,7 @@ if verificar_autenticacion():
             rango_max_x = max(omega_inicial, omega_final, omega_hicks) * 1.3  # Damos un 30% más de aire a la derecha
             rango_max_y = max(omega_inicial * (1+i_inicial), omega_final * (1+i_final), omega_hicks * (1+i_final)) * 1.3
             
-fig_static = go.Figure()
+            fig_static = go.Figure()
             
             # --- 1. RESTRICCIONES PRESUPUESTARIAS (SIEMPRE PUNTEADAS) ---
             # Restricción Inicial (Gris)
