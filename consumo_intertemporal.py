@@ -109,15 +109,22 @@ if verificar_autenticacion():
         
         with col1:
             st.write("**Espacio de Asignación Intertemporal (Estática)**")
-            c1_vec = np.linspace(0.1, max(omega_inicial, omega_final) * 1.1, 200)
+            
+            # --- AJUSTE DE ESCALA 1: Ampliación del rango para que la recta no quede tan arriba ---
+            rango_max_x = max(omega_inicial, omega_final, omega_hicks) * 1.3  # Damos un 30% más de aire a la derecha
+            rango_max_y = max(omega_inicial * (1+i_inicial), omega_final * (1+i_final), omega_hicks * (1+i_final)) * 1.3
+            
+            c1_vec = np.linspace(0.1, rango_max_x, 200)
             fig_static = go.Figure()
             
-            # Restricciones Presupuestarias
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_inicial - c1_vec) * (1 + i_inicial), name="RPI Inicial (i₀)", line=dict(color='gray', dash='dash')))
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_final - c1_vec) * (1 + i_final), name="RPF Final (i₁)", line=dict(color='blue')))
+            # --- AJUSTE VISUAL 1: Rectas SIEMPRE punteadas/rayadas ---
+            # Restricciones Presupuestarias (Rectas -> dash)
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_inicial - c1_vec) * (1 + i_inicial), name="RPI Inicial (i₀)", line=dict(color='gray', width=2, dash='dash')))
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_final - c1_vec) * (1 + i_final), name="RPF Final (i₁)", line=dict(color='blue', width=2, dash='dash')))
             fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_hicks - c1_vec) * (1 + i_final), name="RP Hicks (Teórica)", line=dict(color='orange', width=1, dash='dot')))
             
-            # Curva de Indiferencia Inicial
+            # --- AJUSTE VISUAL 2: Isocuantas SIEMPRE llenas ---
+            # Curvas de Indiferencia (Curvas -> sólidas)
             fig_static.add_trace(go.Scatter(x=c1_vec, y=np.exp((u_inicial - np.log(c1_vec)) / beta), name="U₀ (Bienestar Inicial)", line=dict(color='green', width=2)))
             
             # Marcación de Puntos Macroeconómicos
@@ -128,7 +135,8 @@ if verificar_autenticacion():
 
             fig_static.update_layout(
                 xaxis_title="Consumo Presente (C₁)", yaxis_title="Consumo Futuro (C₂)",
-                xaxis=dict(range=[0, max(omega_inicial, omega_final)*1.05]), yaxis=dict(range=[0, max(omega_inicial, omega_final)*(1+i_final)*0.7]),
+                xaxis=dict(range=[0, rango_max_x]), 
+                yaxis=dict(range=[0, rango_max_y]),
                 legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99), margin=dict(l=20, r=20, t=20, b=20), height=450
             )
             st.plotly_chart(fig_static, use_container_width=True)
@@ -246,28 +254,34 @@ if verificar_autenticacion():
         
         with col_g1:
             st.write("**Desplazamiento Analítico de Rectas e Isocuantas (t=1)**")
-            # El dominio del grid se extiende para cubrir los interceptos teóricos de las RP
-            c1_grid = np.linspace(0.1, max(omega_2d_inicial, omega_2d_final) * 1.1, 300)
+            
+            # --- AJUSTE DE ESCALA 2: Ampliación simétrica ---
+            rango_max_x2 = max(omega_2d_inicial, omega_2d_final) * 1.3
+            rango_max_y2 = max(omega_2d_inicial, omega_2d_final) * 1.3
+            
+            c1_grid = np.linspace(0.1, rango_max_x2, 300)
             fig_macro_static = go.Figure()
             
-            # Restricción Presupuestaria Inicial (Gris) y Final (Azul)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_inicial - c1_grid, name="RP Inicial (Estado Est.)", line=dict(color='gray', dash='dash')))
+            # --- AJUSTE VISUAL 3: Rectas SIEMPRE punteadas/rayadas ---
+            # Restricción Presupuestaria Inicial (Gris, Rayada) y Final (Azul, Rayada)
+            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_inicial - c1_grid, name="RP Inicial (Estado Est.)", line=dict(color='gray', width=2, dash='dash')))
             
             if restriccion_liquidez:
                 grid_restric = np.where(c1_grid <= y1_final, omega_2d_final - c1_grid, np.nan)
-                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=grid_restric, name="RP Final (Con Restricción)", line=dict(color='crimson', width=3)))
+                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=grid_restric, name="RP Final (Con Restricción)", line=dict(color='crimson', width=3, dash='dash')))
                 fig_macro_static.add_vline(x=y1_final, line_dash="dot", line_color="crimson", annotation_text="Límite Crédito (Y₁)")
             else:
-                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_final - c1_grid, name="RP Post-Shock (Libre)", line=dict(color='blue', width=2.5)))
+                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=omega_2d_final - c1_grid, name="RP Post-Shock (Libre)", line=dict(color='blue', width=2.5, dash='dash')))
 
+            # --- AJUSTE VISUAL 4: Isocuantas SIEMPRE llenas ---
             # Isocuantas de utilidad intertemporal
             u_init_2d = np.log(c1_inicial_plot) + gamma_futuro * np.log(cfut_inicial_plot / gamma_futuro)
             indif_init_2d = gamma_futuro * np.exp((u_init_2d - np.log(c1_grid)) / gamma_futuro)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=indif_init_2d, name="U₀ (EE Inicial)", line=dict(color='green', width=1.5)))
+            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=indif_init_2d, name="U₀ (EE Inicial)", line=dict(color='green', width=1.5))) # Continua
             
             u_libre_2d = np.log(c1_libre_plot) + gamma_futuro * np.log(cfut_libre_plot / gamma_futuro)
             indif_libre_2d = gamma_futuro * np.exp((u_libre_2d - np.log(c1_grid)) / gamma_futuro)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=indif_libre_2d, name="U₁ (Post-Shock Libre)", line=dict(color='blue', width=1.5, dash='dot')))
+            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=indif_libre_2d, name="U₁ (Post-Shock Libre)", line=dict(color='blue', width=1.5))) # Continua
 
             # Mapeo de Puntos de Decisión e Ingresos
             fig_macro_static.add_trace(go.Scatter(x=[y1_inicial], y=[y_fut_inicial], mode='markers+text', text=['X₀ (Dotación EE)'], textposition='bottom left', marker=dict(color='black', symbol='square', size=8), name="Dotación Inicial"))
@@ -284,11 +298,10 @@ if verificar_autenticacion():
                 line=dict(color='darkgray', dash='dot', width=1.5)
             ))
 
-            # AJUSTE DE VISUALIZACIÓN: Escalas asimétricas personalizadas para centrar la acción analítica
             fig_macro_static.update_layout(
                 xaxis_title="Consumo Presente Actual (C₁)", yaxis_title="VP del Consumo Futuro Acumulado (C_Futuro)",
-                xaxis=dict(range=[0, max(y1_inicial, y1_final) * 2.5]), # Centrado horizontal elegante
-                yaxis=dict(range=[0, max(y_fut_inicial, y_fut_final) * 1.3]), # Proporción vertical balanceada
+                xaxis=dict(range=[0, rango_max_x2]),
+                yaxis=dict(range=[0, rango_max_y2]),
                 legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.7)"), margin=dict(l=20, r=20, t=20, b=20), height=450
             )
             st.plotly_chart(fig_macro_static, use_container_width=True)
