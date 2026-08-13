@@ -114,23 +114,30 @@ if verificar_autenticacion():
             rango_max_x = max(omega_inicial, omega_final, omega_hicks) * 1.3  # Damos un 30% más de aire a la derecha
             rango_max_y = max(omega_inicial * (1+i_inicial), omega_final * (1+i_final), omega_hicks * (1+i_final)) * 1.3
             
-            c1_vec = np.linspace(0.1, rango_max_x, 200)
-            fig_static = go.Figure()
+fig_static = go.Figure()
             
-            # --- AJUSTE VISUAL 1: Rectas SIEMPRE punteadas/rayadas ---
-            # Restricciones Presupuestarias (Rectas -> dash)
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_inicial - c1_vec) * (1 + i_inicial), name="RPI Inicial (i₀)", line=dict(color='gray', width=2, dash='dash')))
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_final - c1_vec) * (1 + i_final), name="RPF Final (i₁)", line=dict(color='blue', width=2, dash='dash')))
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_hicks - c1_vec) * (1 + i_final), name="RP Hicks (Teórica)", line=dict(color='orange', width=1, dash='dot')))
+            # --- 1. RESTRICCIONES PRESUPUESTARIAS (SIEMPRE PUNTEADAS) ---
+            # Restricción Inicial (Gris)
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_inicial - c1_vec) * (1 + i_inicial), name="RP Inicial (i₀)", line=dict(color='gray', width=2, dash='dash')))
+            # Restricción Final Post-Shock (Azul)
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_final - c1_vec) * (1 + i_final), name="RP Final (i₁)", line=dict(color='blue', width=2, dash='dash')))
+            # Restricción Teórica de Hicks (Naranja) - Para separar ES y EI
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_hicks - c1_vec) * (1 + i_final), name="RP Hicks (Teórica)", line=dict(color='orange', width=2, dash='dot')))
             
-            # --- AJUSTE VISUAL 2: Isocuantas SIEMPRE llenas ---
-            # Curvas de Indiferencia (Curvas -> sólidas)
+            # --- 2. CURVAS DE INDIFERENCIA (SIEMPRE LLENAS) ---
+            # Curva Inicial U0 (Verde)
             fig_static.add_trace(go.Scatter(x=c1_vec, y=np.exp((u_inicial - np.log(c1_vec)) / beta), name="U₀ (Bienestar Inicial)", line=dict(color='green', width=2)))
+            # Curva Final U1 (Azul) - ¡La que faltaba para igualar a Sachs & Larraín!
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.exp((u_final - np.log(c1_vec)) / beta), name="U₁ (Bienestar Final)", line=dict(color='blue', width=2)))
             
-            # Marcación de Puntos Macroeconómicos
+            # --- 3. PUNTOS CLAVE Y DOTACIÓN ---
+            # Punto A: Óptimo Inicial
             fig_static.add_trace(go.Scatter(x=[c1_inicial], y=[c2_inicial], mode='markers+text', text=['A (Inicial)'], textposition='top right', marker=dict(color='green', size=10), showlegend=False))
+            # Punto B: Óptimo Final
             fig_static.add_trace(go.Scatter(x=[c1_final], y=[c2_final], mode='markers+text', text=['B (Final)'], textposition='top right', marker=dict(color='blue', size=10), showlegend=False))
+            # Punto C: Óptimo de Hicks (Aísla el Efecto Sustitución)
             fig_static.add_trace(go.Scatter(x=[c1_hicks], y=[c2_hicks], mode='markers+text', text=['C (Hicks)'], textposition='bottom left', marker=dict(color='orange', size=8), showlegend=False))
+            # Dotación Física de Ingresos
             fig_static.add_trace(go.Scatter(x=[y1], y=[y2], mode='markers+text', text=['Dotación (Y)'], textposition='bottom right', marker=dict(color='black', symbol='x', size=10), name="Dotación"))
 
             fig_static.update_layout(
