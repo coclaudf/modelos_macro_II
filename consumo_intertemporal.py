@@ -88,7 +88,7 @@ if verificar_autenticacion():
             i_inicial = st.sidebar.slider("Tasa de Interés Inicial (i₀)", 0.0, 1.0, 0.10, 0.05, format="%.2f")
             i_final = st.sidebar.slider("Tasa de Interés Post-Shock (i₁)", 0.0, 1.0, 0.10, 0.05, format="%.2f")
             
-        else: # Escenarios Predefinidos
+        else:
             st.sidebar.subheader("📚 Selección de Escenario")
             
             familia_predef = st.sidebar.selectbox("1. Tipo de Familia Inicial:", 
@@ -115,7 +115,6 @@ if verificar_autenticacion():
         st.sidebar.subheader("🔍 Visualización")
         zoom_activado = st.sidebar.checkbox("Activar Lupa (Enfocar en la zona de equilibrio)")
 
-        # Cálculos Matemáticos
         omega_inicial = y1 + y2 / (1 + i_inicial)
         omega_final = y1 + y2 / (1 + i_final)
         
@@ -197,11 +196,11 @@ if verificar_autenticacion():
         metrics[2].metric(label="Efecto Ingreso (EI)", value=f"{efecto_ingreso:.2f}")
         metrics[3].metric(label="Efecto Total (ET)", value=f"{efecto_total:.2f}")
 
-        st.info(f"**Análisis:** Al modificarse la tasa de interés, el consumo futuro cambia su precio relativo, generando un **Efecto Sustitución** de **{efecto_sustitucion:.2f}** unidades. Al ser de perfil **{tipo_hogar}**, el Efecto Ingreso es de **{efecto_ingreso:.2f}**.")
+        st.info(f"**Análisis de Sachs & Larraín:** Al modificarse la tasa de interés, el consumo futuro cambia su precio relativo, generando un **Efecto Sustitución** de **{efecto_sustitucion:.2f}** unidades. Al ser de perfil **{tipo_hogar}**, el **Efecto Ingreso** provocado por el cambio en su riqueza intertemporal es de **{efecto_ingreso:.2f}**.")
 
 
     # =============================================================================
-    # MÓDULO 2: SHOCKS DE INGRESO EN 2 PERÍODOS (Ingreso Permanente Básico)
+    # MÓDULO 2: SHOCKS DE INGRESO EN 2 PERÍODOS
     # =============================================================================
     elif modelo_seleccionado == "2. Modelo de 2 Períodos (Shocks de Ingreso: Transitorio vs Permanente)":
         
@@ -217,14 +216,15 @@ if verificar_autenticacion():
             dy2 = st.sidebar.slider("Shock en Período 2 (ΔY₂)", -30.0, 50.0, 0.0, 5.0)
             
             i_rate = 0.10
-            beta = 1 / (1 + i_rate) # Fija para suavización perfecta base
+            beta = 1 / (1 + i_rate)
         else:
             st.sidebar.subheader("📚 Selección de Escenario")
             escenario_shock = st.sidebar.selectbox("Naturaleza del Shock de Ingreso:", [
                 "Situación Inicial (Ingreso Estable)",
                 "A. Shock Transitorio Positivo (Sube solo Y₁)",
                 "B. Shock Permanente Positivo (Sube Y₁ y Y₂)",
-                "C. Shock Futuro Anticipado (Sube solo Y₂)"
+                "C. Shock Futuro Anticipado (Sube solo Y₂)",
+                "D. Shock Negativo (Transitorio)"
             ])
             
             y1_base, y2_base = 50.0, 50.0
@@ -237,13 +237,14 @@ if verificar_autenticacion():
                 dy1, dy2 = 40.0, 0.0
             elif escenario_shock == "B. Shock Permanente Positivo (Sube Y₁ y Y₂)":
                 dy1, dy2 = 40.0, 40.0
-            else: # Futuro
+            elif escenario_shock == "C. Shock Futuro Anticipado (Sube solo Y₂)":
                 dy1, dy2 = 0.0, 40.0
+            else:
+                dy1, dy2 = -20.0, 0.0
 
         st.sidebar.subheader("🔍 Visualización")
         zoom_activado_m2 = st.sidebar.checkbox("Activar Lupa (Enfocar en la zona de equilibrio)")
 
-        # Matemáticas
         y1_final = y1_base + dy1
         y2_final = y2_base + dy2
         
@@ -261,7 +262,6 @@ if verificar_autenticacion():
         delta_c1 = c1_1 - c1_0
         delta_y1 = dy1
         
-        # Propensión Marginal a Consumir
         if delta_y1 != 0: pmc = delta_c1 / delta_y1
         else: pmc = 0.0
 
@@ -325,11 +325,20 @@ if verificar_autenticacion():
         metrics[2].metric(label="Propensión Marginal (PMgC)", value=f"{pmc:.2f}")
         metrics[3].metric(label="Nuevo Ahorro (S₁)", value=f"{(y1_final - c1_1):.2f}")
 
-        st.success("""
-        ### 🎓 Teoría del Ingreso Permanente (Milton Friedman)
-        * **Shock Transitorio:** Si el ingreso sube solo hoy, la dotación se mueve en horizontal. El agente ahorra la mayor parte del shock para suavizar el consumo futuro. La **Propensión Marginal a Consumir (PMgC)** es baja (aprox 0.5).
-        * **Shock Permanente:** Si el ingreso sube hoy y mañana, la dotación salta en diagonal. El agente sabe que es más rico para siempre, por lo que consume casi todo el incremento hoy mismo. La **PMgC** es cercana a 1.0.
-        """)
+        # TEXTO PEDAGÓGICO DINÁMICO
+        explicacion_m2 = "### 🎓 Teoría del Ingreso Permanente (Milton Friedman)\n"
+        if not hay_shock_m2:
+            explicacion_m2 += "El agente se encuentra en su **Situación Inicial**. Dado que prefiere suavizar su consumo y no hay alteraciones en su ingreso futuro, su nivel de consumo y ahorro se mantienen estables de acuerdo a sus preferencias intertemporales."
+        elif dy1 > 0 and dy2 == 0:
+            explicacion_m2 += f"**Shock Transitorio Positivo:** El ingreso aumentó sorpresivamente hoy en {dy1:.1f} unidades. La dotación se movió en horizontal hacia la derecha. Como el agente desea suavizar su nivel de vida, ahorra gran parte de este ingreso extra para el futuro. Notá que la **Propensión Marginal a Consumir (PMgC)** del período 1 es baja ({pmc:.2f})."
+        elif dy1 > 0 and dy2 > 0:
+            explicacion_m2 += f"**Shock Permanente Positivo:** El agente sabe que es más rico hoy y mañana (la dotación saltó en diagonal). Por lo tanto, no hay incentivos para ahorrar preventivamente; ajusta su consumo actual de manera casi proporcional al shock. La **PMgC** es alta, cercana a la unidad ({pmc:.2f})."
+        elif dy1 == 0 and dy2 > 0:
+            explicacion_m2 += "**Shock Futuro Anticipado Positivo:** El agente sabe que *mañana* recibirá más ingresos (ej. herencia o ascenso futuro). La dotación sube verticalmente. Por 'efecto riqueza', la restricción presupuestaria se expande y el consumidor decide incrementar su consumo **hoy mismo**, endeudándose (o reduciendo ahorro) en el período 1."
+        elif dy1 < 0:
+            explicacion_m2 += f"**Shock Negativo:** Ante una caída de ingresos presentes en {abs(dy1):.1f} unidades, el agente busca proteger su consumo recurriendo a desahorro o endeudamiento (si es transitorio). Su PMgC es baja ({pmc:.2f}) para amortiguar el impacto sobre el bienestar."
+
+        st.success(explicacion_m2)
 
 
     # =============================================================================
@@ -351,9 +360,8 @@ if verificar_autenticacion():
             magnitud_shock = st.sidebar.slider("Magnitud del Shock (ΔY)", -30.0, 30.0, 0.0, 5.0)
             restriccion_liquidez = st.sidebar.checkbox("Activar Restricción de Liquidez Estricta (No Endeudamiento)")
             
-        else: # Escenarios Predefinidos
+        else: 
             st.sidebar.subheader("📚 Selección de Escenario")
-            
             escenario_shock = st.sidebar.selectbox("1. Escenario Macroeconómico:", [
                 "Situación Inicial (Sin Shock)",
                 "A. Transitorio Positivo (Ej. Ganar Lotería hoy)",
@@ -368,23 +376,17 @@ if verificar_autenticacion():
             r = 0.05
             
             if escenario_shock == "Situación Inicial (Sin Shock)":
-                tipo_shock = "Temporal Transitorio (Solo en t=1)"
-                magnitud_shock = 0.0
+                tipo_shock, magnitud_shock = "Temporal Transitorio (Solo en t=1)", 0.0
             elif escenario_shock == "A. Transitorio Positivo (Ej. Ganar Lotería hoy)":
-                tipo_shock = "Temporal Transitorio (Solo en t=1)"
-                magnitud_shock = 30.0
+                tipo_shock, magnitud_shock = "Temporal Transitorio (Solo en t=1)", 30.0
             elif escenario_shock == "B. Transitorio Negativo (Ej. Gasto médico imprevisto hoy)":
-                tipo_shock = "Temporal Transitorio (Solo en t=1)"
-                magnitud_shock = -25.0
+                tipo_shock, magnitud_shock = "Temporal Transitorio (Solo en t=1)", -25.0
             elif escenario_shock == "C. Permanente Positivo (Ej. Ascenso laboral hoy)":
-                tipo_shock = "Permanente (De t=1 en adelante)"
-                magnitud_shock = 20.0
+                tipo_shock, magnitud_shock = "Permanente (De t=1 en adelante)", 20.0
             elif escenario_shock == "D. Anticipado Positivo (Ej. Anuncio de herencia para el futuro)":
-                tipo_shock = "Futuro Anticipado Positivo (Anuncio en t=1, ocurre en t=4)"
-                magnitud_shock = 30.0
+                tipo_shock, magnitud_shock = "Futuro Anticipado Positivo (Anuncio en t=1, ocurre en t=4)", 30.0
             elif escenario_shock == "E. Anticipado Negativo (Ej. Anuncio de despido para el futuro)":
-                tipo_shock = "Futuro Anticipado Negativo (Anuncio en t=1, ocurre en t=4)"
-                magnitud_shock = -20.0
+                tipo_shock, magnitud_shock = "Futuro Anticipado Negativo (Anuncio en t=1, ocurre en t=4)", -20.0
 
         st.sidebar.subheader("🔍 Visualización")
         zoom_activado_m3 = st.sidebar.checkbox("Activar Lupa (Enfocar en la zona de equilibrio)")
@@ -512,8 +514,19 @@ if verificar_autenticacion():
         fig_assets.update_layout(template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', xaxis=dict(tickmode='linear', tick0=0, dtick=1, title="Períodos Temporales (t)", showline=True, linecolor='#374151', gridcolor='#E5E7EB'), yaxis=dict(title="Stock de Activos Netos", showline=True, linecolor='#374151', gridcolor='#E5E7EB'), margin=dict(l=20, r=20, t=20, b=20), height=250, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
         st.plotly_chart(fig_assets, use_container_width=True)
 
-        st.success("""
-        ### 🎓 Dinámica de Largo Plazo y Restricciones de Liquidez
-        * Si el shock futuro es **positivo** y se activa la restricción de liquidez, el consumidor no puede endeudarse contra su riqueza futura. El gráfico de activos ($A_t$) choca contra el piso cero y el consumo se estanca hasta que llega el nuevo ingreso real.
-        * Si el shock futuro es **negativo**, la restricción de liquidez no importa. El agente puede ahorrar (acumular activos) libremente para cubrir el agujero futuro, igualando la senda libre.
-        """)
+        # TEXTO PEDAGÓGICO DINÁMICO
+        explicacion_m3 = "### 🎓 Dinámica de Largo Plazo y Expectativas\n"
+        if not hay_shock_m3:
+            explicacion_m3 += "El consumidor se encuentra en la **senda estacionaria de largo plazo**, consumiendo su Ingreso Permanente."
+        elif tipo_shock == "Temporal Transitorio (Solo en t=1)":
+            explicacion_m3 += "* **Shock Transitorio:** El pico de ingreso en t=1 se absorbe distribuyendo el consumo extra a lo largo de los 10 períodos. El agente da un salto en su acumulación de activos financieros ($A_t$) en t=1 y luego los va desacumulando lentamente para financiar el mayor consumo futuro."
+        elif tipo_shock == "Permanente (De t=1 en adelante)":
+            explicacion_m3 += "* **Shock Permanente:** El ingreso permanente subió (o bajó) exactamente en la misma magnitud que el corriente. El consumo da un salto en t=1 y se mantiene plano en el nuevo nivel. Como el nuevo nivel de ingresos es capaz de sostener el nuevo consumo por sí solo, la senda de activos netos no se altera."
+        else:
+            explicacion_m3 += "* **Expectativas Racionales (Shock Anticipado):** El consumidor anticipa el cambio de ingresos que ocurrirá en t=4. El valor presente de su riqueza total cambia hoy (t=1), por lo que el nivel de consumo óptimo se ajusta **inmediatamente**.\n"
+            if restriccion_liquidez and magnitud_shock > 0:
+                explicacion_m3 += "  * ⚠️ **Restricción de Liquidez Activa:** Aunque el agente sabe que será más rico en t=4, el mercado de capitales es imperfecto y **no le permite endeudarse** hoy. Queda atrapado contra la restricción (activos = 0) en los primeros períodos y su consumo efectivo no puede subir hasta que el ingreso físico se materialice en t=4."
+            elif restriccion_liquidez and magnitud_shock < 0:
+                explicacion_m3 += "  * ⚠️ **Restricción de Liquidez (Shock Negativo):** Como el agente anticipa que será más pobre, necesita **ahorrar preventivamente**. Dado que el sistema financiero siempre permite guardar fondos (solo restringe la deuda), la restricción no resulta vinculante. La trayectoria del consumo restringido logra igualar a la del consumo libre sin problemas."
+
+        st.success(explicacion_m3)
