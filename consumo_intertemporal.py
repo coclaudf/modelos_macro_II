@@ -71,14 +71,22 @@ if verificar_autenticacion():
         ]
     )
 
-    # Configuración base para todos los gráficos (Alto Contraste Libre de Errores)
+    # Configuración de Alto Contraste para Plotly (Negro Puro)
     eje_formato = dict(
         showline=True, 
         linecolor='black', 
         linewidth=2, 
-        gridcolor='#9CA3AF'
+        gridcolor='#9CA3AF',
+        tickfont=dict(color='black', size=13),
+        titlefont=dict(color='black', size=15, font="Arial", weight="bold")
     )
-    fuente_gral = dict(color='black', family="sans-serif", size=14)
+    leyenda_formato = dict(
+        yanchor="top", y=0.99, xanchor="right", x=0.99, 
+        bgcolor="rgba(255,255,255,0.9)",
+        bordercolor="black",
+        borderwidth=1,
+        font=dict(color="black", size=13)
+    )
 
     # =============================================================================
     # MÓDULO 1: DOS PERÍODOS CON DESCOMPOSICIÓN DE HICKS (Tasa de Interés)
@@ -166,7 +174,7 @@ if verificar_autenticacion():
             c1_vec = np.linspace(0.1, max_omega_x * 1.2, 300)
             fig_static = go.Figure()
             
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(c1_vec <= max_omega_y*1.5, c1_vec, np.nan), name="Senda Suavización (45°)", line=dict(color='darkgray', width=1.5, dash='dot')))
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(c1_vec <= max_omega_y*1.5, c1_vec, np.nan), name="Senda 45° (C₁=C₂)", line=dict(color='darkgray', width=1.5, dash='dot')))
 
             if hay_shock_m1:
                 fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_inicial - c1_vec) * (1 + i_inicial), name="RP Inicial (i₀)", line=dict(color='black', width=2, dash='dash')))
@@ -175,11 +183,11 @@ if verificar_autenticacion():
             fig_static.add_trace(go.Scatter(x=c1_vec, y=(omega_final - c1_vec) * (1 + i_final), name="RP Final (i₁)" if hay_shock_m1 else "Restricción Presupuestaria", line=dict(color='blue', width=2.5, dash='dash')))
             
             u0_y = np.exp((u_inicial - np.log(c1_vec)) / beta)
-            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u0_y <= max_omega_y*1.5, u0_y, np.nan), name="U₀ (Bienestar Inicial)", line=dict(color='green', width=2)))
+            fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u0_y <= max_omega_y*1.5, u0_y, np.nan), name="U₀ (Utilidad)", line=dict(color='green', width=2)))
             
             if hay_shock_m1:
                 u1_y = np.exp((u_final - np.log(c1_vec)) / beta)
-                fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u1_y <= max_omega_y*1.5, u1_y, np.nan), name="U₁ (Bienestar Final)", line=dict(color='blue', width=2)))
+                fig_static.add_trace(go.Scatter(x=c1_vec, y=np.where(u1_y <= max_omega_y*1.5, u1_y, np.nan), name="U₁ (Utilidad)", line=dict(color='blue', width=2)))
             
             fig_static.add_trace(go.Scatter(x=[y1], y=[y2], mode='markers+text', text=['Dotación (Y)'], textposition='bottom right', marker=dict(color='black', symbol='x', size=10), name="Dotación"))
             if hay_shock_m1:
@@ -188,13 +196,13 @@ if verificar_autenticacion():
             fig_static.add_trace(go.Scatter(x=[c1_final], y=[c2_final], mode='markers+text', text=['B (Final)'] if hay_shock_m1 else ['A (Óptimo)'], textposition='top right', marker=dict(color='blue', size=10), showlegend=False))
 
             fig_static.update_layout(
-                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', font=fuente_gral,
+                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 xaxis_title="Consumo Presente (C₁)", yaxis_title="Consumo Futuro (C₂)", 
                 xaxis=dict(**eje_formato, range=rango_x), yaxis=dict(**eje_formato, range=rango_y), 
-                legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.9)"), 
-                margin=dict(l=20, r=20, t=20, b=20), height=450
+                legend=leyenda_formato, margin=dict(l=20, r=20, t=20, b=20), height=450
             )
-            st.plotly_chart(fig_static, use_container_width=True)
+            # BLOQUEO DE TEMA: theme=None es la clave para que no pise los colores
+            st.plotly_chart(fig_static, use_container_width=True, theme=None)
 
         with col2:
             st.write("**Evolución Temporal del Consumo y el Ingreso**")
@@ -204,13 +212,14 @@ if verificar_autenticacion():
             fig_dynamic.add_trace(go.Scatter(x=['Período 1', 'Período 2'], y=[c1_final, c2_final], name="Consumo Final", line=dict(color='blue', width=3), marker=dict(size=8)))
             
             fig_dynamic.update_layout(
-                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', font=fuente_gral,
+                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 yaxis_title="Unidades de Producción/Consumo", 
                 yaxis=dict(**eje_formato, range=[0, max(y1, y2, c2_inicial, c2_final)*1.15]), 
                 xaxis=dict(**eje_formato), 
-                legend=dict(yanchor="bottom", y=0.01, xanchor="left", x=0.01), margin=dict(l=20, r=20, t=20, b=20), height=450
+                legend=dict(yanchor="bottom", y=0.01, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.9)", bordercolor="black", borderwidth=1, font=dict(color="black", size=13)), 
+                margin=dict(l=20, r=20, t=20, b=20), height=450
             )
-            st.plotly_chart(fig_dynamic, use_container_width=True)
+            st.plotly_chart(fig_dynamic, use_container_width=True, theme=None)
 
         metrics = st.columns(4)
         metrics[0].metric(label="Perfil de Familia", value=tipo_hogar)
@@ -218,7 +227,7 @@ if verificar_autenticacion():
         metrics[2].metric(label="Efecto Ingreso (EI)", value=f"{efecto_ingreso:.2f}")
         metrics[3].metric(label="Efecto Total (ET)", value=f"{efecto_total:.2f}")
 
-        st.info(f"**Análisis de Sachs & Larraín:** Al modificarse la tasa de interés, el consumo futuro cambia su precio relativo, generando un **Efecto Sustitución** de **{efecto_sustitucion:.2f}** unidades. Al ser de perfil **{tipo_hogar}**, el **Efecto Ingreso** provocado por el cambio en su riqueza intertemporal es de **{efecto_ingreso:.2f}**.")
+        st.info(f"**Análisis de la Senda Óptima:** Si la tasa de interés es nula y $\\beta=1$, el agente suaviza perfectamente ($C_1 = C_2$) y la tangencia cae sobre la recta de 45°. Como la tasa aquí es positiva (10%), el mercado premia el ahorro intertemporal, por lo que el agente prefiere situarse por encima de la recta de 45° consumiendo relativamente más mañana.")
 
 
     # =============================================================================
@@ -324,11 +333,11 @@ if verificar_autenticacion():
             fig_m2.add_trace(go.Scatter(x=c1_v, y=(omega_1 - c1_v)*(1+i_rate), name="RP₁ (Post-Shock)" if hay_shock_m2 else "Restricción Presupuestaria", line=dict(color='blue', width=2.5, dash='dash')))
             
             u0_y = np.exp((u_0 - np.log(c1_v)) / beta)
-            fig_m2.add_trace(go.Scatter(x=c1_v, y=np.where(u0_y <= max_om_y*1.5, u0_y, np.nan), name="U₀", line=dict(color='green', width=2)))
+            fig_m2.add_trace(go.Scatter(x=c1_v, y=np.where(u0_y <= max_om_y*1.5, u0_y, np.nan), name="U₀ (Utilidad)", line=dict(color='green', width=2)))
             
             if hay_shock_m2:
                 u1_y = np.exp((u_1 - np.log(c1_v)) / beta)
-                fig_m2.add_trace(go.Scatter(x=c1_v, y=np.where(u1_y <= max_om_y*1.5, u1_y, np.nan), name="U₁", line=dict(color='blue', width=2)))
+                fig_m2.add_trace(go.Scatter(x=c1_v, y=np.where(u1_y <= max_om_y*1.5, u1_y, np.nan), name="U₁ (Utilidad)", line=dict(color='blue', width=2)))
                 
             fig_m2.add_trace(go.Scatter(x=[y1_final], y=[y2_final], mode='markers+text', text=['X₁ (Final)'] if hay_shock_m2 else ['X₀ (Dotación)'], textposition='top right', marker=dict(color='purple', symbol='x', size=10), name="Dotación X₁"))
             
@@ -336,12 +345,12 @@ if verificar_autenticacion():
             fig_m2.add_trace(go.Scatter(x=[c1_1], y=[c2_1], mode='markers+text', text=['B (Final)'] if hay_shock_m2 else ['A (Óptimo)'], textposition='top left', marker=dict(color='blue', size=10), showlegend=False))
 
             fig_m2.update_layout(
-                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', font=fuente_gral,
+                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 xaxis_title="Consumo Presente (C₁)", yaxis_title="Consumo Futuro (C₂)", 
                 xaxis=dict(**eje_formato, range=r_x), yaxis=dict(**eje_formato, range=r_y), 
-                legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.9)"), margin=dict(l=20, r=20, t=20, b=20), height=450
+                legend=leyenda_formato, margin=dict(l=20, r=20, t=20, b=20), height=450
             )
-            st.plotly_chart(fig_m2, use_container_width=True)
+            st.plotly_chart(fig_m2, use_container_width=True, theme=None)
 
         with col2:
             st.write("**Evolución Dinámica: Ingreso vs Consumo**")
@@ -354,12 +363,13 @@ if verificar_autenticacion():
             max_y_axis = max(y1_final, y2_final, c2_1, y1_base) * 1.15
             
             fig_d2.update_layout(
-                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', font=fuente_gral,
+                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 yaxis_title="Unidades", yaxis=dict(**eje_formato, range=[min_y_axis, max_y_axis]), 
                 xaxis=dict(**eje_formato), 
-                legend=dict(yanchor="bottom", y=0.01, xanchor="left", x=0.01), margin=dict(l=20, r=20, t=20, b=20), height=450
+                legend=dict(yanchor="bottom", y=0.01, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.9)", bordercolor="black", borderwidth=1, font=dict(color="black", size=13)), 
+                margin=dict(l=20, r=20, t=20, b=20), height=450
             )
-            st.plotly_chart(fig_d2, use_container_width=True)
+            st.plotly_chart(fig_d2, use_container_width=True, theme=None)
 
         metrics = st.columns(4)
         metrics[0].metric(label="Variación Ingreso (ΔY₁)", value=f"{delta_y1:.2f}")
@@ -528,27 +538,27 @@ if verificar_autenticacion():
 
             u_init_2d = np.log(c1_inicial_plot) + gamma_futuro * np.log(cfut_inicial_plot / gamma_futuro)
             indif_init_2d = gamma_futuro * np.exp((u_init_2d - np.log(c1_grid)) / gamma_futuro)
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_init_2d <= max_omega_2d*1.5, indif_init_2d, np.nan), name="U₀ (EE Inicial)", line=dict(color='green', width=2)))
+            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_init_2d <= max_omega_2d*1.5, indif_init_2d, np.nan), name="U₀ (Utilidad Inicial)", line=dict(color='green', width=2)))
             
             if hay_shock_m3:
                 u_libre_2d = np.log(c1_libre_plot) + gamma_futuro * np.log(cfut_libre_plot / gamma_futuro)
                 indif_libre_2d = gamma_futuro * np.exp((u_libre_2d - np.log(c1_grid)) / gamma_futuro)
-                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_libre_2d <= max_omega_2d*1.5, indif_libre_2d, np.nan), name="U₁ (Post-Shock Libre)", line=dict(color='blue', width=2)))
+                fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=np.where(indif_libre_2d <= max_omega_2d*1.5, indif_libre_2d, np.nan), name="U₁ (Utilidad Libre)", line=dict(color='blue', width=2)))
 
             if hay_shock_m3: fig_macro_static.add_trace(go.Scatter(x=[y1_inicial], y=[y_fut_inicial], mode='markers+text', text=['X₀ (Dotación EE)'], textposition='bottom left', marker=dict(color='black', symbol='square', size=8), name="Dotación Inicial"))
             fig_macro_static.add_trace(go.Scatter(x=[y1_final], y=[y_fut_final], mode='markers+text', text=['X₁ (Dotación Shock)'] if hay_shock_m3 else ['X₀ (Dotación)'], textposition='top right', marker=dict(color='purple', symbol='x', size=10), name="Dotación Post-Shock"))
             fig_macro_static.add_trace(go.Scatter(x=[c1_libre_plot], y=[cfut_libre_plot], mode='markers+text', text=['A óptimo (Libre)'], textposition='top left', marker=dict(color='blue', size=10), showlegend=False))
             
             if restriccion_liquidez: fig_macro_static.add_trace(go.Scatter(x=[c1_restric_plot], y=[cfut_restric_plot], mode='markers+text', text=['B óptimo (Restringido)'], textposition='bottom right', marker=dict(color='crimson', size=10), showlegend=False))
-            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=c1_grid * gamma_futuro, name="Senda de Suavización Plena", line=dict(color='darkgray', dash='dot', width=1.5)))
+            fig_macro_static.add_trace(go.Scatter(x=c1_grid, y=c1_grid * gamma_futuro, name="Senda Suavización", line=dict(color='darkgray', dash='dot', width=1.5)))
 
             fig_macro_static.update_layout(
-                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', font=fuente_gral,
+                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 xaxis_title="Consumo Presente Actual (C₁)", yaxis_title="VP del Consumo Futuro Acumulado", 
                 xaxis=dict(**eje_formato, range=rango_x2), yaxis=dict(**eje_formato, range=rango_y2), 
-                legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99, bgcolor="rgba(255,255,255,0.9)"), margin=dict(l=20, r=20, t=20, b=20), height=450
+                legend=leyenda_formato, margin=dict(l=20, r=20, t=20, b=20), height=450
             )
-            st.plotly_chart(fig_macro_static, use_container_width=True)
+            st.plotly_chart(fig_macro_static, use_container_width=True, theme=None)
 
         with col_g2:
             st.write("**Senda Temporal de Transición Dinámica ($t=0$ a $t=10$)**")
@@ -559,11 +569,12 @@ if verificar_autenticacion():
             fig_lineas.add_hline(y=y_ee, line_dash="dot", line_color="gray", annotation_text="EE Base (t=0)", annotation_position="bottom left")
             
             fig_lineas.update_layout(
-                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', font=fuente_gral,
+                template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
                 xaxis=dict(**eje_formato, tickmode='linear', tick0=0, dtick=1, title="Períodos Temporales (t)"), 
-                yaxis=dict(**eje_formato, title="Escala Monetaria"), margin=dict(l=20, r=20, t=20, b=20), height=450, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.9)")
+                yaxis=dict(**eje_formato, title="Escala Monetaria"), margin=dict(l=20, r=20, t=20, b=20), height=450, 
+                legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.9)", bordercolor="black", borderwidth=1, font=dict(color="black", size=13))
             )
-            st.plotly_chart(fig_lineas, use_container_width=True)
+            st.plotly_chart(fig_lineas, use_container_width=True, theme=None)
 
         st.subheader("🏦 Senda de Acumulación / Desacumulación de Activos Netos ($A_t$)")
         fig_assets = go.Figure()
@@ -572,11 +583,12 @@ if verificar_autenticacion():
         fig_assets.add_hline(y=0.0, line_color="black", line_width=1)
         
         fig_assets.update_layout(
-            template="plotly_white", paper_bgcolor='white', plot_bgcolor='white', font=fuente_gral,
+            template="plotly_white", paper_bgcolor='white', plot_bgcolor='white',
             xaxis=dict(**eje_formato, tickmode='linear', tick0=0, dtick=1, title="Períodos Temporales (t)"), 
-            yaxis=dict(**eje_formato, title="Stock de Activos Netos"), margin=dict(l=20, r=20, t=20, b=20), height=250, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.9)")
+            yaxis=dict(**eje_formato, title="Stock de Activos Netos"), margin=dict(l=20, r=20, t=20, b=20), height=250, 
+            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.9)", bordercolor="black", borderwidth=1, font=dict(color="black", size=13))
         )
-        st.plotly_chart(fig_assets, use_container_width=True)
+        st.plotly_chart(fig_assets, use_container_width=True, theme=None)
 
         # TEXTO PEDAGÓGICO DINÁMICO
         explicacion_m3 = "### 🎓 Dinámica de Largo Plazo y Expectativas\n"
