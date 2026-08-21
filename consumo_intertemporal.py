@@ -71,16 +71,14 @@ if verificar_autenticacion():
         ]
     )
 
-    # Configuración base para todos los gráficos (Alto Contraste)
+    # Configuración base para todos los gráficos (Alto Contraste Libre de Errores)
     eje_formato = dict(
         showline=True, 
         linecolor='black', 
         linewidth=2, 
-        gridcolor='#9CA3AF', 
-        tickfont=dict(color='black', size=13),
-        titlefont=dict(color='black', size=14, family="Arial")
+        gridcolor='#9CA3AF'
     )
-    fuente_gral = dict(color='black', family="Arial")
+    fuente_gral = dict(color='black', family="sans-serif", size=14)
 
     # =============================================================================
     # MÓDULO 1: DOS PERÍODOS CON DESCOMPOSICIÓN DE HICKS (Tasa de Interés)
