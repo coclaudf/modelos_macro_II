@@ -68,7 +68,7 @@ if verificar_autenticacion():
     st.markdown("*Análisis del equilibrio macroeconómico con sector público y movilidad de capitales (Sachs & Larraín).*")
 
     # Colores unificados de alto contraste
-    COLOR_TEXTO, COLOR_EJE, COLOR_GRILLA = '#111827', '#374151', '#E5E7EB'
+    COLOR_TEXTO, COLOR_EJE, COLOR_GRILLA = '#111827', '#374151', '#9CA3AF'
     C_BLUE, C_GREEN, C_PURPLE, C_RED, C_GRAY = '#1D4ED8', '#15803D', '#7E22CE', '#DC2626', '#6B7280'
 
     eje_formato = dict(
@@ -112,23 +112,23 @@ if verificar_autenticacion():
 
     # APLICACIÓN DE SHOCKS A LOS PARÁMETROS AUTÓNOMOS
     if escenario == "1. Auge Exportador Transitorio (Suba de Ingreso Corriente)":
-        S0 = S0_base + 50.0  # El ahorro se expande al ahorrar el ingreso extra
+        S0 = S0_base + 50.0  
     
     elif escenario == "2. Boom de Inversión ('Animal Spirits' / Mgn. Eficiencia)":
-        I0 = I0_base + 50.0  # La inversión se desplaza a la derecha
+        I0 = I0_base + 50.0  
     
     elif escenario == "3. Aumento del Gasto Público Transitorio (Déficit)":
-        S0 = S0_base - 50.0  # Cae el ahorro nacional (S = Spriv + Spub)
+        S0 = S0_base - 50.0  
     
     elif escenario == "4. Equivalencia Ricardiana (Baja T financiada con deuda)":
         show_ricardian = True
-        S0 = S0_base # S Total NO cambia. Spub cae 40, Spriv sube 40.
+        S0 = S0_base 
     
     elif escenario == "5. Shock Externo Global (Sube r* mundial)":
-        r_world = 0.15 # La tasa mundial sube
+        r_world = 0.15 
     
     elif escenario == "6. Trampa de Liquidez (Colapso de Inversión)":
-        I0 = I0_base - 140.0 # Caída catastrófica de las expectativas
+        I0 = I0_base - 140.0 
 
     # CÁLCULO DE LA TASA DE INTERÉS DE EQUILIBRIO (r_eq) SEGÚN RÉGIMEN
     r_autarky = (I0 - S0) / (sr + ir)
@@ -136,18 +136,15 @@ if verificar_autenticacion():
 
     if regimen == "B. Economía Cerrada / Controles de Capital (CC=0)":
         r_eq = r_autarky
-        # Zero Lower Bound (Límite Cero de Tasa Nominal/Real a corto plazo)
         if r_eq < 0.0:
             r_eq = 0.0
             ZLB_activa = True
     elif regimen == "A. Pequeña Economía Abierta (r dada)":
-        # Es tomadora de precios, r = r*
         r_eq = r_world
-    else: # "C. Gran Economía Abierta"
-        # Mueve la tasa mundial parcialmente (ej. absorbe el 40% del shock interno)
+    else: 
         r_eq = r_world_base + 0.40 * (r_autarky - r_world_base)
         if escenario == "5. Shock Externo Global (Sube r* mundial)":
-            r_eq = 0.15 # Si el shock es externo, lo toma pleno
+            r_eq = 0.15 
         if r_eq < 0.0: r_eq = 0.0
 
     # CÁLCULOS FINALES EN EL PUNTO DE EQUILIBRIO
@@ -155,10 +152,8 @@ if verificar_autenticacion():
     I_eq = I0 - ir * r_eq
     CC_eq = S_eq - I_eq
 
-    # Para economía cerrada en trampa de liquidez, la Inversión define el producto efectivo si S > I
     if ZLB_activa and regimen == "B. Economía Cerrada / Controles de Capital (CC=0)":
-        CC_eq = 0.0 # No puede exportar ahorro
-        # S_eq es "ahorro deseado", pero en la realidad S debe igualar a I vía caída del Ingreso (Recesión Keynesiana)
+        CC_eq = 0.0 
         S_efectivo = I_eq
     else:
         S_efectivo = S_eq
@@ -188,36 +183,30 @@ if verificar_autenticacion():
     with col_g1:
         fig_si = go.Figure()
 
-        # Sombras de la situación base (si hubo shock)
         if escenario != "0. Situación Inicial (Equilibrio base)":
             S_base_curva = S0_base + sr * r_vec
             I_base_curva = I0_base - ir * r_vec
             fig_si.add_trace(go.Scatter(x=S_base_curva, y=r_vec, name="S₀ (Ahorro Inicial)", line=dict(color=C_GREEN, width=1.5, dash='dot')))
             fig_si.add_trace(go.Scatter(x=I_base_curva, y=r_vec, name="I₀ (Inversión Inicial)", line=dict(color=C_BLUE, width=1.5, dash='dot')))
 
-        # Curvas Post-Shock
         fig_si.add_trace(go.Scatter(x=S_curva, y=r_vec, name="S₁ (Ahorro Nacional)", line=dict(color=C_GREEN, width=3)))
         fig_si.add_trace(go.Scatter(x=I_curva, y=r_vec, name="I₁ (Inversión Nacional)", line=dict(color=C_BLUE, width=3)))
 
-        # Especial: Equivalencia Ricardiana
         if show_ricardian:
-            Spriv_curva = (S0 + 40) + sr * r_vec # Privado salta a la derecha
-            Spub_curva = np.full(len(r_vec), -40) # Público en déficit fijo
+            Spriv_curva = (S0 + 40) + sr * r_vec 
+            Spub_curva = np.full(len(r_vec), -40) 
             fig_si.add_trace(go.Scatter(x=Spriv_curva, y=r_vec, name="S_priv (Ahorro Privado)", line=dict(color='#86EFAC', width=2, dash='dash')))
             fig_si.add_trace(go.Scatter(x=Spub_curva, y=r_vec, name="S_pub (Ahorro Público)", line=dict(color='#FCA5A5', width=2, dash='dash')))
             fig_si.add_annotation(x=200, y=0.20, text="S_Total no se mueve<br>(Spriv compensa Spub)", showarrow=False, font=dict(color=COLOR_TEXTO, size=12), bgcolor="#F3F4F6")
 
-        # Tasa de Interés Horizontal
         fig_si.add_hline(y=r_eq, line_dash="dash", line_color=COLOR_TEXTO, annotation_text=f"r = {r_eq*100:.1f}%", annotation_position="top left")
 
-        # Pintar la brecha de Cuenta Corriente (si aplica)
         if abs(CC_eq) > 0.1 and not (ZLB_activa and regimen == "B. Economía Cerrada / Controles de Capital (CC=0)"):
-            color_banda = "rgba(220, 38, 38, 0.2)" if CC_eq < 0 else "rgba(21, 128, 61, 0.2)" # Rojo déficit, Verde superávit
+            color_banda = "rgba(220, 38, 38, 0.2)" if CC_eq < 0 else "rgba(21, 128, 61, 0.2)" 
             texto_banda = "Déficit CC" if CC_eq < 0 else "Superávit CC"
             fig_si.add_shape(type="rect", x0=min(S_eq, I_eq), x1=max(S_eq, I_eq), y0=r_eq-0.005, y1=r_eq+0.005, fillcolor=color_banda, line_width=0)
             fig_si.add_annotation(x=(S_eq+I_eq)/2, y=r_eq+0.015, text=texto_banda, showarrow=False, font=dict(color=COLOR_TEXTO, size=11))
 
-        # Especial ZLB Brecha Recesiva
         if ZLB_activa and regimen == "B. Economía Cerrada / Controles de Capital (CC=0)":
             fig_si.add_shape(type="rect", x0=I_eq, x1=S_eq, y0=-0.005, y1=0.005, fillcolor="rgba(107, 114, 128, 0.3)", line_width=0)
             fig_si.add_annotation(x=(S_eq+I_eq)/2, y=0.015, text="Exceso de Ahorro<br>(Brecha Recesiva)", showarrow=False, font=dict(color=C_RED, size=11))
@@ -242,9 +231,8 @@ if verificar_autenticacion():
 
         fig_cc.add_trace(go.Scatter(x=CC_curva, y=r_vec, name="CC₁ (Cuenta Corriente)", line=dict(color=C_PURPLE, width=3)))
 
-        # Tasa de Interés y Punto de Equilibrio
         fig_cc.add_hline(y=r_eq, line_dash="dash", line_color=COLOR_TEXTO)
-        fig_cc.add_vline(x=0, line_dash="solid", line_color="black", line_width=1) # Eje Y central (CC=0)
+        fig_cc.add_vline(x=0, line_dash="solid", line_color="black", line_width=1) 
 
         if not (ZLB_activa and regimen == "B. Economía Cerrada / Controles de Capital (CC=0)"):
             fig_cc.add_trace(go.Scatter(x=[CC_eq], y=[r_eq], mode='markers+text', text=['Eq.'], textposition='bottom right', marker=dict(color='black', size=10), showlegend=False))
@@ -310,7 +298,7 @@ if verificar_autenticacion():
             st.write("⚠️ **Ajuste Recesivo:** La alta tasa mundial frena los proyectos productivos (Cae la Inversión a lo largo de su curva) e incentiva el ahorro (Cae el Consumo a lo largo de su curva). Esta fuerte contracción interna genera un excedente de fondos que mejora forzosamente la Cuenta Corriente hacia el superávit.")
 
     elif escenario == "6. Trampa de Liquidez (Colapso de Inversión)":
-        st.write("💡 **Dinámica de Curvas:** El peor escenario ("*Pesimismo extremo*"). La expectativa de rentabilidad colapsa y la curva de Inversión ($I$) sufre una retracción masiva a la izquierda.")
+        st.write("💡 **Dinámica de Curvas:** El peor escenario ('*Pesimismo extremo*'). La expectativa de rentabilidad colapsa y la curva de Inversión ($I$) sufre una retracción masiva a la izquierda.")
         if "Cerrada" in regimen:
             st.write("🚨 **Límite Cero (Zero Lower Bound):** Para igualar $S$ e $I$, la tasa de interés debería ser negativa. Como el límite nominal inferior es 0%, la tasa 'choca' contra el piso. En $r=0$, el Ahorro deseado supera ampliamente a la Inversión. Al no poder exportar ese ahorro ($CC=0$), la única forma de volver al equilibrio es vía **recesión**: el Ingreso Nacional caerá (desplazando a $S$ a la izquierda por empobrecimiento) hasta que se cierren las brechas. Es la cruz keynesiana en acción.")
         else:
